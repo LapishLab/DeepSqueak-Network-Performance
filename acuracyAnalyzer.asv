@@ -19,8 +19,6 @@ iscentGoodOverlapped = centGoodx' > tx1 & centGoodx' < tx2 & centGoody' > ty1 & 
 iscentTestOverlapped = centTestx > gx1' & centTestx < gx2' & centTesty > gy1' & centTesty < gy2';
 isOverlapped = iscentGoodOverlapped & iscentTestOverlapped;
 
-TestMatches = sum(isOverlapped,2);
-truePositives = sum(TestMatches > 0);
 
 %% Find accuracy (true positives)
 
