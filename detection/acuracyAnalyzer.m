@@ -14,17 +14,17 @@ centGoodx = (gx1+gx2)/2;
 centGoody = (gy1+gy2)/2;
 centTestx = (tx1+tx2)/2;
 centTesty = (ty1+ty2)/2;
-
+% is center point of "Good" box inside the bounds of "Test" box
 iscentGoodOverlapped = centGoodx' > tx1 & centGoodx' < tx2 & centGoody' > ty1 & centGoody' < ty2;
+% is center point of "Test" box inside the bounds of "Good" box
 iscentTestOverlapped = centTestx > gx1' & centTestx < gx2' & centTesty > gy1' & centTesty < gy2';
+% if both of the above are true, we consider Test box is same as Good box
 isOverlapped = iscentGoodOverlapped & iscentTestOverlapped;
 
 TestMatches = sum(isOverlapped,2);
 truePositives = sum(TestMatches > 0);
 
 %% Find accuracy (true positives)
-
-
 truePositives = size(unique(good2TestBridge(:,1)),1);
 totalPositive = size(goodBoxes, 1);
 accuracy = truePositives/totalPositive
