@@ -1,4 +1,4 @@
-function g = balanced_split(t, proportions)
+function [g, all_groups]= balanced_split(t, proportions)
     % split table into groups (e.g. test, validation, & train) while
     % maintaining balanced experimental conditions
     arguments
