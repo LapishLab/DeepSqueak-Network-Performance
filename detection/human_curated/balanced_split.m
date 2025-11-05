@@ -10,13 +10,14 @@ function [split, group_id]= balanced_split(t, n)
     [group_id, group_label] = findgroups(t);
     counts = histcounts(group_id, 1:max(group_id)+1);
     split_n = n .* counts ./ min(counts);
+    group_label.split_n = split_n';
     split_n = round(split_n);
+    group_label.split_n_round = split_n';
 
     fprintf("Total files in Test/Val: %d \n", sum(split_n))
-    group_label.split_n = split_n';
     disp(group_label)
 
-
+    rng(1); % use same random seed for consistent random results
     
     split = strings(height(t),1);
     for id = 1:max(group_id)
