@@ -8,22 +8,22 @@ function generate_audio_links(csvPath)
     T = readtable(csvPath, Delimiter=",");
 
     % Verify required columns
-    requiredCols = {'audio_path', 'group', 'subject'};
+    requiredCols = {'audio_file_path', 'split', 'subject'};
     missingCols = setdiff(requiredCols, T.Properties.VariableNames);
     if ~isempty(missingCols)
         error('Missing required columns: %s', strjoin(missingCols, ', '));
     end
 
-    % Validate audio_path entries and pad subject
+    % Validate audio_file_path entries and pad subject
     nRows = height(T);
     T.subject = string(T.subject);
-    T.subject = pad(T.subject, 3, 'left', '0');
+    T.subject(strlength(T.subject)<3) = pad(T.subject(strlength(T.subject)<3), 3, 'left', '0');
 
     validPaths = true(nRows, 1);
     ids = strings(nRows, 1);
 
     for i = 1:nRows
-        audioFile = T.audio_path{i};
+        audioFile = T.audio_file_path{i};
         if ~isfile(audioFile)
             warning('Invalid audio path at row %d: %s', i, audioFile);
             validPaths(i) = false;
@@ -38,7 +38,7 @@ function generate_audio_links(csvPath)
     baseDir = fileparts(csvPath);
     audioDir = fullfile(baseDir, 'audio');
     detectDir = fullfile(baseDir, 'detection_files');
-    subDirs = unique(T.group)';
+    subDirs = unique(T.split)';
 
     for d = {audioDir, detectDir}
         for s = subDirs
@@ -54,8 +54,8 @@ function generate_audio_links(csvPath)
         if ~validPaths(i)
             continue;
         end
-        src = T.audio_path{i};
-        dest = fullfile(audioDir, T.group{i}, T.id(i)+".wav");
+        src = T.audio_file_path{i};
+        dest = fullfile(audioDir, T.split{i}, T.id(i)+".wav");
         try
             if isunix || ismac
                 system(sprintf('ln -sf "%s" "%s"', src, dest));
