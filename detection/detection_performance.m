@@ -1,4 +1,4 @@
-function performance = detection_performance(truth_dir, test_dir, threshold)
+function [score, details] = detection_performance(truth_dir, test_dir, threshold)
 % calculate perfomance for all detection files in truth/test folders
     arguments
         truth_dir string % Path to folder containing manually curated detection files
@@ -6,13 +6,22 @@ function performance = detection_performance(truth_dir, test_dir, threshold)
         threshold double = 0.5 % Required overlap of detection boxes to be considered matching
     end
     f = find_matching_detection_files(truth_dir, test_dir);
-    performance = cell(height(f), 1);
+    
+    % get performance for each file
+    details = cell(height(f), 1);
     for i=1:height(f)
-        performance{i} = calc_file_performance(f.truth_file(i), f.test_file(i), threshold);
-        % performance(i,:) =  struct2table(s, AsArray=true);
-        % performance = [performance,s];
+        details{i} = calc_file_performance(f.truth_file(i), f.test_file(i), threshold);
     end
-    performance = struct2table([performance{:}]); % unpack cell array of structs and convert to table
+    details = struct2table([details{:}], AsArray=true); % unpack cell array of structs and convert to table
+
+    % calculate final score
+    score = struct();
+    score.TP = sum(cellfun(@height, details.TP));% total true positive
+    score.FN = sum(cellfun(@height, details.FN));% total false negative
+    score.FP = sum(cellfun(@height, details.FP));% total false positive
+    score.recall = score.TP / (score.TP + score.FN);
+    score.precision = score.TP / (score.TP + score.FP);
+    score.F1 = 2*score.precision*score.recall/(score.precision+score.recall);
 end
 
 function s = calc_file_performance(truth_file,test_file, threshold)
@@ -42,9 +51,9 @@ function s = calc_file_performance(truth_file,test_file, threshold)
     s.recall = n_TP / (n_TP + n_FN);
     s.precision = n_TP / (n_TP + n_FP);
     s.F1 = 2 * s.precision * s.recall / (s.precision + s.recall);
-    s.TP = [TP_ind_truth ; TP_ind_test]';
-    s.FN = FN_ind; 
-    s.FP = FP_ind; 
+    s.TP = {[TP_ind_truth ; TP_ind_test]'};
+    s.FN = {FN_ind'}; 
+    s.FP = {FP_ind'}; 
 end
 
 function overlap_percentage = calc_box_overlap(A, B)
