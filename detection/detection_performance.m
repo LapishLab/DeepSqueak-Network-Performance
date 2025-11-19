@@ -6,11 +6,13 @@ function performance = detection_performance(truth_dir, test_dir, threshold)
         threshold double = 0.5 % Required overlap of detection boxes to be considered matching
     end
     f = find_matching_detection_files(truth_dir, test_dir);
-    performance = table();
+    performance = cell(height(f), 1);
     for i=1:height(f)
-        s = calc_file_performance(f.truth_file(i), f.test_file(i), threshold);
-        performance(i,:) =  struct2table(s);
+        performance{i} = calc_file_performance(f.truth_file(i), f.test_file(i), threshold);
+        % performance(i,:) =  struct2table(s, AsArray=true);
+        % performance = [performance,s];
     end
+    performance = struct2table([performance{:}]); % unpack cell array of structs and convert to table
 end
 
 function s = calc_file_performance(truth_file,test_file, threshold)
@@ -23,18 +25,26 @@ function s = calc_file_performance(truth_file,test_file, threshold)
     truth_boxes = load_boxes(truth_file);
     test_boxes = load_boxes(test_file);
 
-    overlap = calc_box_overlap(truth_boxes, test_boxes);
-    isMatch = overlap>threshold;
-    
+    overlap = calc_box_overlap(truth_boxes, test_boxes);%[truth x test] matrix
+    [max_overlap, truth_ind] = max(overlap); % max overlap for each test box 
+    isMatch = max_overlap>threshold; % Does each test box have a matching truth box?
+
+    TP_ind_truth = truth_ind(isMatch);% True positive: truth box index
+    TP_ind_test = find(isMatch);% True positive: test box index
+    FP_ind = find(~isMatch);% False positive: Index of test box with no matching truth box
+    FN_ind = find(ismember(1:length(truth_boxes), truth_ind(isMatch))); % False Negative: Index of truth box with no matching test box
+
+    n_TP = length(TP_ind_truth);
+    n_FP = length(FP_ind);
+    n_FN = length(FN_ind);
+
     s = struct();
-    s.truth_file = truth_file;
-    s.test_file = test_file;
-    s.TP = sum(any(isMatch,2)); % True positive is row (truth) with matching column (test)
-    s.FN = sum(~any(isMatch,2)); % False negative is row (truth) with no matching column (test)
-    s.FP = sum(~any(isMatch,1)); % False positive is column (test) with now matching row (truth)
-    s.precision = s.TP / (s.TP + s.FP);
-    s.recall = s.TP / (s.TP + s.FN);
+    s.recall = n_TP / (n_TP + n_FN);
+    s.precision = n_TP / (n_TP + n_FP);
     s.F1 = 2 * s.precision * s.recall / (s.precision + s.recall);
+    s.TP = [TP_ind_truth ; TP_ind_test]';
+    s.FN = FN_ind; 
+    s.FP = FP_ind; 
 end
 
 function overlap_percentage = calc_box_overlap(A, B)
