@@ -15,7 +15,7 @@ function s = calc_file_performance(truth_file,test_file, threshold)
     TP_ind_truth = truth_ind(isMatch);% True positive: truth box index
     TP_ind_test = find(isMatch);% True positive: test box index
     FP_ind = find(~isMatch);% False positive: Index of test box with no matching truth box
-    FN_ind = find(~ismember(1:length(truth_boxes), truth_ind(isMatch))); % False Negative: Index of truth box with no matching test box
+    FN_ind = find(~ismember(1:height(truth_boxes), truth_ind(isMatch))); % False Negative: Index of truth box with no matching test box
 
     n_TP = length(TP_ind_truth);
     n_FP = length(FP_ind);
