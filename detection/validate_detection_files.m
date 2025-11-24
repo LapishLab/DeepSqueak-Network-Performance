@@ -1,15 +1,15 @@
 function validate_detection_files(path)
-    if exist(path, 'file')
+    if exist(path, 'file')==2
         validate_detection_file(path)
-    elseif exist(path, 'dir')
+    elseif exist(path, 'dir')==7
         matfiles = {dir(fullfile(path, "*.mat")).name}';
         if isempty(matfiles)
             warning('No .mat files found in the specified folder.');
         end
         for i=1:length(matfiles)
-            path = fullfile(path, matfiles{i});
+            filepath = fullfile(path, matfiles{i});
             fprintf("validating %s \n",matfiles{i})
-            validate_detection_file(path);
+            validate_detection_file(filepath);
         end
     else
         error("Path is not a valid directory or file")
