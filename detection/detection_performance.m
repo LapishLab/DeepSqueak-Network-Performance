@@ -13,6 +13,7 @@ function [score, details] = detection_performance(truth_dir, test_dir, threshold
         details{i} = calc_file_performance(f.truth_file(i), f.test_file(i), threshold);
     end
     details = struct2table([details{:}], AsArray=true); % unpack cell array of structs and convert to table
+    details = cat(2, details, f); % add filenames
 
     % calculate final score
     score = struct();
