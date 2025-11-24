@@ -70,10 +70,12 @@ function validate_detection_file(filepath)
     end
     
     % does the box have 0 height
-    freq_height = boxes(:,3);
+    freq_height = boxes(:,4);
     zero_height = find(freq_height == 0);
     if zero_height
         warning('The following call boxes have 0 box height; %s', mat2str(zero_height))
+        d.Calls(zero_height,:) = [];
+        mat_changed = true;
     end
     
     % Are there exact duplicates
