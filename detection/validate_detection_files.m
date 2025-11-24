@@ -91,7 +91,7 @@ function validate_detection_file(filepath)
     % Are there boxes with any overlap
     overlap = rectint(boxes, boxes);
     overlap(logical(eye(size(overlap)))) = 0;%set diagonal to 0;
-    [overlap_boxes,~] = find(overlap<1 & overlap>0);
+    [overlap_boxes,~] = find(overlap>0);
     if duplicate_boxes
         warning('The following call boxes are overlap other boxes; %s', mat2str(overlap_boxes))
     end
