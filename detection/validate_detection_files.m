@@ -1,12 +1,18 @@
-function validate_detection_files(folder)
-    matfiles = {dir(fullfile(folder, "*.mat")).name}';
-    if isempty(matfiles)
-        warning('No .mat files found in the specified folder.');
-    end
-    for i=1:length(matfiles)
-        path = fullfile(folder, matfiles{i});
-        fprintf("validating %s \n",matfiles{i})
-        validate_detection_file(path);
+function validate_detection_files(path)
+    if exist(path, 'file')
+        validate_detection_file(path)
+    elseif exist(path, 'dir')
+        matfiles = {dir(fullfile(path, "*.mat")).name}';
+        if isempty(matfiles)
+            warning('No .mat files found in the specified folder.');
+        end
+        for i=1:length(matfiles)
+            path = fullfile(path, matfiles{i});
+            fprintf("validating %s \n",matfiles{i})
+            validate_detection_file(path);
+        end
+    else
+        error("Path is not a valid directory or file")
     end
 end
 
