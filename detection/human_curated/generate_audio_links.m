@@ -14,48 +14,48 @@ function generate_audio_links(csvPath)
         error('Missing required columns: %s', strjoin(missingCols, ', '));
     end
 
-    % Validate audio_file_path entries and pad subject
+    % Pad subject with 0 to 3 digit length
     nRows = height(T);
     T.subject = string(T.subject);
     T.subject(strlength(T.subject)<3) = pad(T.subject(strlength(T.subject)<3), 3, 'left', '0');
 
-    validPaths = true(nRows, 1);
-    ids = strings(nRows, 1);
+    % Skip files that are not assigned a split group
+     skip = cellfun(@isempty, T.split);
 
-    for i = 1:nRows
-        audioFile = T.audio_file_path{i};
-        if ~isfile(audioFile)
-            warning('Invalid audio path at row %d: %s', i, audioFile);
-            validPaths(i) = false;
-        end
-        [~, name, ~] = fileparts(audioFile);
-        ids(i) = sprintf('%s_subject%s', name, T.subject(i));
+
+    % Validate audio_file_path
+    validPaths = isfile(T.audio_file_path);
+    if any(~validPaths & ~skip)
+        bad_lines = num2str(find(~validPaths));
+        bad_lines = strjoin(string(bad_lines),'\n');
+        error("These rows contain invalid file paths: \n%s", bad_lines)
     end
 
-    T.id = ids;
+    % generate new file name by combining filename and subject #
+    [~, original_name, ext] = fileparts(T.audio_file_path);
+    T.link_name = compose('%s_subject%s%s', ...
+        string(original_name), ...
+        T.subject, ...
+        string(ext) ...
+        );
 
-    % Create output directories
-    baseDir = fileparts(csvPath);
-    audioDir = fullfile(baseDir, 'audio');
-    detectDir = fullfile(baseDir, 'detection_files');
-    subDirs = unique(T.split)';
+    new_filepath = fullfile(fileparts(csvPath), 'audio', T.split, T.link_name);
 
-    for d = {audioDir, detectDir}
-        for s = subDirs
-            targetDir = fullfile(d{1}, s{1});
-            if ~exist(targetDir, 'dir')
-                mkdir(targetDir);
-            end
+    % Create folders if necessary
+    audio_folders = unique(fileparts(new_filepath(~skip)));
+    for i=1:length(audio_folders)
+        if ~exist(audio_folders(i), 'dir')
+            mkdir(audio_folders(i));
         end
     end
 
     % Create symbolic links
     for i = 1:nRows
-        if ~validPaths(i)
+        if skip(i)
             continue;
         end
         src = T.audio_file_path{i};
-        dest = fullfile(audioDir, T.split{i}, T.id(i)+".wav");
+        dest = new_filepath(i);
         try
             if isunix || ismac
                 system(sprintf('ln -sf "%s" "%s"', src, dest));
@@ -68,6 +68,9 @@ function generate_audio_links(csvPath)
             warning('Failed to create symlink for row %d', i);
         end
     end
+
+    % resave csv file with ID/new_audio_name
+    writetable(T, csvPath); 
 
     fprintf('Processed %d entries. Valid paths: %d\n', nRows, sum(validPaths));
 end
