@@ -1,4 +1,10 @@
 function plot_box_instance(target_box, other_boxes, audio_file)
+
+% add callback function to change color limit with scroll wheel
+h = figure(1); clf;
+h.WindowScrollWheelFcn = @scrollWheelClimCallback;
+
+%
 mid_time = target_box(1) + target_box(3)/2;
 window_size = 0.5;
 time_range = [mid_time-window_size/2, mid_time+window_size/2];
@@ -13,29 +19,17 @@ plot_boxes(other_boxes, 'blue')
 [~,filename,~] = fileparts(audio_file);
 title(strrep(filename, '_', '\_'))
 
-
-while true
-    in = input("  Change color limits with: h+, h-, l+, l- \n" + ...
-        "  Or hit enter to continue to next USV \n", "s");
-    switch in
-        case "h+"
-            clim(clim() .* [1 1.5])
-        case "h-"
-            clim(clim() .* [1 0.75])
-        case "l+"
-            clim(clim() .* [1.5 1])
-        case "l-"
-            clim(clim() .* [.75 1])
-        otherwise
-            break
-    end
-end
-
-
+input("hit enter to continue to next USV \n", "s");
 end
 
 function plot_boxes(boxes, color)
     for i=1:height(boxes)
         rectangle('pos', boxes(i,:), EdgeColor=color)
     end
+end
+
+function scrollWheelClimCallback(src, event)
+    gain = 1+event.VerticalScrollCount*.1;
+    ax = gca(src);
+    ax.CLim = [ax.CLim(1), ax.CLim(2)*gain];
 end
