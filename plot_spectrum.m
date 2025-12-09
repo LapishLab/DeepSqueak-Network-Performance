@@ -20,16 +20,16 @@ function plot_spectrum(audio_file, start, stop)
 
     colormap("inferno")
 
-    avg = mean(P,2); % amplitude above 40kHz 
-    dev = std(P,[],2);
+    % avg = mean(P,2); % amplitude above 40kHz 
+    % dev = std(P,[],2);
 
 
 
 
-    low = min(avg);
+    % low = min(avg);
+    % 
+    % shift_high = avg+(5*dev);
+    % high = max(shift_high(F>4e4));
 
-    shift_high = avg+(5*dev);
-    high = max(shift_high(F>4e4));
-
-    clim([low,high])
+    % clim([low,high])
 end
