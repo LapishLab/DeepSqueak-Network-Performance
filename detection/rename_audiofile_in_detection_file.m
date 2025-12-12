@@ -18,6 +18,12 @@ function update_names(folder)
         mat_path = fullfile(folder,fnames{i});
         d = load(mat_path);
         if exist(d.audiodata.Filename, 'file')
+            [mat_dir,mat_base,mat_ext] = fileparts(mat_path);
+            [~,audio_base,~] = fileparts(d.audiodata.Filename);
+            if mat_base ~= audio_base
+                new_mat_path = fullfile(mat_dir,audio_base + mat_ext);
+                movefile(mat_path,new_mat_path)
+            end
             continue
         end
         [audioFolder,old_audio,~] = fileparts(d.audiodata.Filename);
