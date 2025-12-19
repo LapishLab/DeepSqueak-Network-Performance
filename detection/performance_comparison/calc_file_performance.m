@@ -8,28 +8,23 @@ function s = calc_file_performance(truth_file, test_file, opts)
         opts.min_score double = 0 % Score (confidence) of a USV to be included in the analysis
     end
 
-    %% load Detection files
-    truth_boxes = load_boxes(truth_file);
-    test_boxes = load_boxes(test_file);
+    %% load calls
+    truth = load(truth_file).Calls;
+    test = load(test_file).Calls;
 
-    %% TODO: Remove USVs with too low of a score
-
-    %% remove too short USVs
-    is_short = truth_boxes(:,3) < opts.min_duration;
-    truth_boxes(is_short, :) = [];
-
-    is_short = test_boxes(:,3) < opts.min_duration;
-    test_boxes(is_short, :) = [];
+    %% filter calls
+    truth = filter_calls(truth, min_duration=opts.min_duration, min_score=opts.min_score);
+    test = filter_calls(test, min_duration=opts.min_duration, min_score=opts.min_score);
 
     %% calculator overlap
-    overlap = calc_box_overlap(truth_boxes, test_boxes);%[truth x test] matrix
+    overlap = calc_box_overlap(truth.Box, test.Box);%[truth x test] matrix
     [max_overlap, truth_ind] = max(overlap); % max overlap for each test box 
     isMatch = max_overlap>opts.min_overlap; % Does each test box have a matching truth box?
 
     TP_ind_truth = truth_ind(isMatch);% True positive: truth box index
     TP_ind_test = find(isMatch);% True positive: test box index
     FP_ind = find(~isMatch);% False positive: Index of test box with no matching truth box
-    FN_ind = find(~ismember(1:height(truth_boxes), truth_ind(isMatch))); % False Negative: Index of truth box with no matching test box
+    FN_ind = find(~ismember(1:height(truth.Box), truth_ind(isMatch))); % False Negative: Index of truth box with no matching test box
 
     n_TP = length(TP_ind_truth);
     n_FP = length(FP_ind);
@@ -53,7 +48,3 @@ function overlap_percentage = calc_box_overlap(A, B)
     overlap_percentage = overlap_area ./ total_area; 
 end
 
-function boxes = load_boxes(path)
-    s = load(path);
-    boxes = s.Calls.Box;
-end
