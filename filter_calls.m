@@ -10,6 +10,6 @@ function calls = filter_calls(calls, opts)
     too_low_score = calls.Score < opts.min_score;
 
     % Only keep calls that don't fail the above checks
-    is_good = ~too_short & ~too_low_score;
+    is_good = ~too_short & ~too_low_score & call.Accept;
     calls = calls(is_good,:);
 end
