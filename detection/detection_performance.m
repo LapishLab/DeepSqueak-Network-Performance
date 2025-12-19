@@ -3,15 +3,17 @@ function [score, details] = detection_performance(truth_dir, test_dir, opts)
     arguments
         truth_dir string % Path to folder containing manually curated detection files
         test_dir string % Path to folder containing network generated detected files
-        opts.overlap_threshold double = 0.5 % Required overlap of detection boxes to be considered matching
-        opts.duration_threshold double = 0 % Required duration of a USV to be included in the analysis
+        opts.min_overlap double % minimum overlap of detection boxes to be considered matching
+        opts.min_duration double % minimum duration of a USV to be included in the analysis
+        opts.min_score double % Score (confidence) of a USV to be included in the analysis
     end
     f = find_matching_detection_files(truth_dir, test_dir);
     
     % get performance for each file
     details = cell(height(f), 1);
+    opts = namedargs2cell(opts);
     for i=1:height(f)
-        details{i} = calc_file_performance(f.truth_file(i), f.test_file(i), opts.overlap_threshold, opts.duration_threshold);
+        details{i} = calc_file_performance(f.truth_file(i), f.test_file(i), opts{:});
     end
     details = struct2table([details{:}], AsArray=true); % unpack cell array of structs and convert to table
     details = cat(2, details, f); % add filenames

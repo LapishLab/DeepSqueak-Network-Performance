@@ -2,8 +2,8 @@
 brandon = "/home/lapishla/Documents/GitHub/DeepSqueak-Network-Performance/detection/human_curated/Prat_Urgency/detection_files/validation";
 anna = "/home/lapishla/Documents/GitHub/DeepSqueak-Network-Performance/detection/human_curated/Prat_Urgency/detection_files/validation/Anna_duplicate/";
 david = "/home/lapishla/Documents/GitHub/DeepSqueak-Network-Performance/detection/human_curated/Prat_Urgency/detection_files/validation/David_duplicate/";
-% [score, details] = detection_performance(anna, brandon, overlap_threshold=0.001, duration_threshold=.01)
-[score, details] = detection_performance(david, brandon, overlap_threshold=0.001, duration_threshold=.01)
+% [score, details] = detection_performance(anna, brandon, min_overlap=0.001, min_duration=.01)
+[score, details] = detection_performance(david, brandon, min_overlap=0.001, min_duration=.01)
 
 % plot_FN(details)
 plot_FP(details)
@@ -15,7 +15,7 @@ recalls = nan(size(duration));
 precisions = nan(size(duration));
 f1 = nan(size(duration));
 for i = 1:length(duration)
-    results = detection_performance(david, brandon, overlap_threshold=0.001, duration_threshold=duration(i));
+    results = detection_performance(david, brandon, min_duration=duration(i));
     recalls(i) = results.recall;
     precisions(i) = results.precision;
     f1(i) = results.F1;
@@ -36,7 +36,7 @@ recalls = nan(size(overlap));
 precisions = nan(size(overlap));
 f1 = nan(size(overlap));
 for i = 1:length(overlap)
-    results = detection_performance(anna, brandon, overlap_threshold=overlap(i));
+    results = detection_performance(anna, brandon, min_overlap=overlap(i));
     recalls(i) = results.recall;
     precisions(i) = results.precision;
     f1(i) = results.F1;
@@ -49,15 +49,4 @@ plot(overlap, f1, DisplayName="F1")
 legend()
 ylim([0 1])
 xlabel("Overlap")
-
-%% brandon vs brandon sanity check
-[results, details] = detection_performance(brandon, brandon)
-
-%% Brandon vs. sara3 network
-brandon = "/home/lapishla/Documents/GitHub/DeepSqueak-Network-Performance/detection/human_curated/Prat_Urgency/detection_files/validation/";
-sara3 = "/home/lapishla/Desktop/net_test/sara3/";
-[results, details] = detection_performance(brandon, sara3)
-%% Brandon vs. Sulayman network (truitt.mat) 
-truitt = "/home/lapishla/Desktop/net_test/truitt/";
-[results, details] = detection_performance(brandon, truitt)
 
