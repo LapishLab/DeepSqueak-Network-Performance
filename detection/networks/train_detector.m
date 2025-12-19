@@ -1,5 +1,5 @@
 function [detector, info, options] = train_detector(train_folder, validation_folder,net_path,checkpoint_dir)
-train = load_datastore(train_folder);
+[train, example] = load_datastore(train_folder);
 val = load_datastore(validation_folder);
 
 options = trainingOptions('sgdm',...
@@ -17,12 +17,29 @@ options = trainingOptions('sgdm',...
 layers = load(net_path).detector;
 
 % Train the YOLO v2 network.
-[detector,info] = trainYOLOv2ObjectDetector(train,layers,options);
+% [detector,info] = trainYOLOv2ObjectDetector(train,layers,options);
 
+%% add missing values to checkpoints
+add_checkpoint_options(checkpoint_dir, example, options)
 end
 
+function add_checkpoint_options(checkpoint_dir, example, options)
+    % load and concatonate TTables
+    fnames = {dir(checkpoint_dir+"*.mat").name};
 
-function data = load_datastore(folder)
+    for i=1:length(fnames)
+        file_path = fullfile(checkpoint_dir,fnames{i});
+        d = load(file_path);
+        d.wind = example.wind;
+        d.nfft = example.nfft;
+        d.noverlap = example.noverlap;
+        d.imScale = example.imScale;
+        d.imLength = example.imLength;
+        save(file_path, '-struct', "d")
+    end
+end
+
+function [data, d]= load_datastore(folder)
     % load and concatonate TTables
     fnames = {dir(folder+"*.mat").name};
     ttables = table();
