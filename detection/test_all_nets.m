@@ -35,7 +35,7 @@ test_names = test_names(3:end);
 results = cell(length(test_names), 1);
 for i=1:length(test_names)
     test = fullfile(test_parent, test_names{i});
-    results{i} = detection_performance(truth_dir, test, .1);
+    results{i} = detection_performance(truth_dir, test, overlap_threshold=.1);
 end
 results = struct2table(cat(1, results{:}));
 results.net = test_names';
