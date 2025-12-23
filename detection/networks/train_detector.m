@@ -17,7 +17,7 @@ options = trainingOptions('sgdm',...
 layers = load(net_path).detector;
 
 % Train the YOLO v2 network.
-% [detector,info] = trainYOLOv2ObjectDetector(train,layers,options);
+[detector,info] = trainYOLOv2ObjectDetector(train,layers,options);
 
 %% add missing values to checkpoints
 add_checkpoint_options(checkpoint_dir, example, options)
