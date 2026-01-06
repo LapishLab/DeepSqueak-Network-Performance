@@ -14,10 +14,17 @@ options = trainingOptions('sgdm',...
           'ValidationData',val);
 
 % Load existing network
-layers = load(net_path).detector;
+original = load(net_path);
 
 % Train the YOLO v2 network.
-[detector,info] = trainYOLOv2ObjectDetector(train,layers,options);
+[detector,info] = trainYOLOv2ObjectDetector(train,original.detector,options);
+
+
+final = original;
+final.detector = detector;
+file_path = fullfile(checkpoint_dir, 'final.mat');
+save(file_path, '-struct', "final")
+
 
 %% add missing values to checkpoints
 add_checkpoint_options(checkpoint_dir, example, options)
