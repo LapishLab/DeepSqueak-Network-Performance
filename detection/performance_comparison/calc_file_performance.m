@@ -3,9 +3,9 @@ function s = calc_file_performance(truth_file, test_file, opts)
     arguments
         truth_file string = "anna" % Path to manually curated detection file
         test_file string = "brandon" % Path to network generated detected file
-        opts.min_overlap double = 0.5 % minimum overlap of detection boxes to be considered matching
-        opts.min_duration double = 0 % minimum duration of a USV to be included in the analysis
-        opts.min_score double = 0 % Score (confidence) of a USV to be included in the analysis
+        opts.min_overlap double = 0.1 % minimum overlap of detection boxes to be considered matching
+        opts.min_duration double = .005 % minimum duration of a USV to be included in the analysis
+        opts.min_score double = 0.5 % Score (confidence) of a USV to be included in the analysis
     end
 
     %% load calls
