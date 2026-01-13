@@ -2,3 +2,4 @@
 /detection/human_curated/truitt_social/audio
 /detection/human_curated/Prat_Urgency/audio
 *.csv#
+*.DS_Store
