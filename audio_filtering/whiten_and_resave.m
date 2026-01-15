@@ -16,7 +16,7 @@
 % for i=1:length(files)
 %     whiten_and_resave(files(i))
 % end
-
+% whiten_and_resave("/datastar/audio_rec/noise_test/2CAP.wav","/datastar/audio_rec/noise_test/2CAP_whitened.flac")
 function whiten_and_resave(wav,new_name)
 [original_audio, fs] = audioread(wav); % Read the original audio file
 
