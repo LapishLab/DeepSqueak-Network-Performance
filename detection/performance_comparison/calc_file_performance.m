@@ -6,6 +6,7 @@ function s = calc_file_performance(truth_file, test_file, opts)
         opts.min_overlap double = 0.1 % minimum overlap of detection boxes to be considered matching
         opts.min_duration double = .005 % minimum duration of a USV to be included in the analysis
         opts.min_score double = 0.5 % Score (confidence) of a USV to be included in the analysis
+        opts.include_rejected logical = false; % Should USVs marked as "rejected" be included in the analysis
     end
 
     %% load calls
@@ -13,8 +14,8 @@ function s = calc_file_performance(truth_file, test_file, opts)
     test = load(test_file).Calls;
 
     %% filter calls
-    truth = filter_calls(truth, min_duration=opts.min_duration, min_score=opts.min_score);
-    test = filter_calls(test, min_duration=opts.min_duration, min_score=opts.min_score);
+    truth = filter_calls(truth, min_duration=opts.min_duration, min_score=opts.min_score, include_rejected=opts.include_rejected);
+    test = filter_calls(test, min_duration=opts.min_duration, min_score=opts.min_score, include_rejected=opts.include_rejected);
 
     %% calculator overlap
     overlap = calc_box_overlap(truth.Box, test.Box);%[truth x test] matrix

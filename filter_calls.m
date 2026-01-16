@@ -3,6 +3,7 @@ function calls = filter_calls(calls, opts)
         calls table %
         opts.min_duration double = 0 % minimum duration of a USV to be included in the analysis
         opts.min_score double = 0 % Score (confidence) of a USV to be included in the analysis
+        opts.include_rejected logical = false; % Should USVs marked as "rejected" be included in the analysis
     end
 
     % perform various checks
@@ -10,6 +11,11 @@ function calls = filter_calls(calls, opts)
     too_low_score = calls.Score < opts.min_score;
 
     % Only keep calls that don't fail the above checks
-    is_good = ~too_short & ~too_low_score & calls.Accept;
+    is_good = ~too_short & ~too_low_score;
     calls = calls(is_good,:);
+
+    % Only keep accepted calls
+    if ~opts.include_rejected
+        calls = calls(calls.Accept==1, :);
+    end
 end

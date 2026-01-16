@@ -6,6 +6,7 @@ function [score, details] = detection_performance(truth_dir, test_dir, opts)
         opts.min_overlap double % minimum overlap of detection boxes to be considered matching
         opts.min_duration double % minimum duration of a USV to be included in the analysis
         opts.min_score double % Score (confidence) of a USV to be included in the analysis
+        opts.include_rejected logical % Should USVs marked as "rejected" be included in the analysis
     end
     f = find_matching_detection_files(truth_dir, test_dir);
     
