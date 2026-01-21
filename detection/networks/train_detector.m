@@ -46,6 +46,6 @@ function data = load_datastore(folder)
 
     % Convert to datastore
     blds = boxLabelDatastore(ttables(:,2:end));
-    imds = imageDatastore([ttables.imageFilename{:}]');
+    imds = imageDatastore(string(ttables.imageFilename));
     data = combine(imds, blds);
 end
