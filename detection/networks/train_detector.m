@@ -39,9 +39,12 @@ function data = load_datastore(folder)
         d = load(fullfile(folder,fnames{i}));
         ttables = cat(1, ttables, d.TTable);
     end
-    % correct image paths
-    for i=1:height(ttables)
-        ttables.imageFilename{i} = strrep(ttables.imageFilename{i}, "Training/", folder);
+
+    % correct image paths (if using GUI image generation and copying files)
+    if ~exist(ttables.imageFilename(1), 'file')
+        for i=1:height(ttables)
+            ttables.imageFilename{i} = strrep(ttables.imageFilename{i}, "Training/", folder);
+        end
     end
 
     % Convert to datastore
