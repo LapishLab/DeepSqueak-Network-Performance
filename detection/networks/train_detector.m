@@ -33,7 +33,7 @@ end
 
 function data = load_datastore(folder)
     % load and concatonate TTables
-    fnames = {dir(folder+"*.mat").name};
+    fnames = {dir(fullfile(folder,"*.mat")).name};
     ttables = table();
     for i=1:length(fnames)
         d = load(fullfile(folder,fnames{i}));
