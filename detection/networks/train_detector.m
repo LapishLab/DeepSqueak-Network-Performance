@@ -1,5 +1,5 @@
 function [detector, info, op] = train_detector(train_folder, validation_folder, net_path)
-train = load_datastore(train_folder);
+[train, training_table] = load_datastore(train_folder);
 val = load_datastore(validation_folder);
 
 op = trainingOptions('sgdm');
@@ -16,22 +16,27 @@ op.ValidationData=val;
 op.OutputNetwork='best-validation';
 
 % Load existing network
-network = load(net_path);
+old_detector = load(net_path).detector;
 
 % Train the YOLO v2 network.
-[detector,info] = trainYOLOv2ObjectDetector(train,network.detector,op);
+[detector,info] = trainYOLOv2ObjectDetector(train,old_detector,op);
 
-
+network = struct();
 network.detector = detector;
 network.options = op;
 network.info = info;
+network.wind = training_table.wind;
+network.noverlap = training_table.noverlap;
+network.nfft = training_table.nfft;
+network.imLength = training_table.imLength;
+network.imScale = training_table.imScale;
 
 timestamp = string(datetime('now', 'Format', 'yyyy-MM-dd_HH-mm-ss'));
 file_path = fullfile(fileparts(net_path), "lapish_"+timestamp+".mat");
 save(file_path, '-struct', "network")
 end
 
-function data = load_datastore(folder)
+function [data, d]= load_datastore(folder)
     % load and concatonate TTables
     fnames = {dir(fullfile(folder,"*.mat")).name};
     ttables = table();
