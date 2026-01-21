@@ -7,13 +7,15 @@ aria = "/home/lapishla/Documents/GitHub/DeepSqueak-Network-Performance/detection
 mouseR2 = "/home/lapishla/Desktop/network_validation/mouse_R2/";
 sara = "/home/lapishla/Desktop/network_validation/sara/";
 train1 ="/home/lapishla/Desktop/network_validation/train1/";
+img_rewrite = "/home/lapishla/Desktop/network_validation/rewrite_img_gen/";
 
-test = aria;
+test = img_rewrite;
 %%
-[score, details] = detection_performance(brandon, test)
+[score, details] = detection_performance(brandon, test,include_rejected=false);
+disp(score)
 %%
-% plot_FN(details)
-plot_FP(details)
+plot_FN(details)
+% plot_FP(details)
 % plot_TP(details)
 
 %% Test various thresholds

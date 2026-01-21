@@ -14,6 +14,7 @@ function detection = filter_calls(detection, opts)
     calls = calls(calls.Score > opts.min_score, :);
     calls = calls(calls.Box(:,2) > opts.min_freq, :);
     calls = calls(calls.Box(:,2)+calls.Box(:,4) < opts.max_freq, :);
+    calls = calculate_intensity(calls, detection.audiodata)
 
     % Only keep accepted calls
     if ~opts.include_rejected
