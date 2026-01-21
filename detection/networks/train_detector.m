@@ -25,7 +25,9 @@ network = load(net_path);
 network.detector = detector;
 network.options = op;
 network.info = info;
-file_path = fullfile(fileparts(net_path), 'final.mat');
+
+timestamp = string(datetime('now', 'Format', 'yyyy-MM-dd_HH-mm-ss'));
+file_path = fullfile(fileparts(net_path), "lapish_"+timestamp+".mat");
 save(file_path, '-struct', "network")
 end
 
