@@ -10,22 +10,24 @@ function s = calc_file_performance(truth_file, test_file, opts)
     end
 
     %% load calls
-    truth = load(truth_file).Calls;
-    test = load(test_file).Calls;
+    truth = load(truth_file);
+    test = load(test_file);
 
     %% filter calls
     truth = filter_calls(truth, min_duration=opts.min_duration, min_score=opts.min_score, include_rejected=opts.include_rejected);
     test = filter_calls(test, min_duration=opts.min_duration, min_score=opts.min_score, include_rejected=opts.include_rejected);
 
+    truth_box = truth.Calls.Box;
+    test_box = test.Calls.Box;
     %% calculator overlap
-    overlap = calc_box_overlap(truth.Box, test.Box);%[truth x test] matrix
+    overlap = calc_box_overlap(truth_box, test_box);%[truth x test] matrix
     [max_overlap, truth_ind] = max(overlap); % max overlap for each test box 
     isMatch = max_overlap>opts.min_overlap; % Does each test box have a matching truth box?
 
     TP_ind_truth = truth_ind(isMatch);% True positive: truth box index
     TP_ind_test = find(isMatch);% True positive: test box index
     FP_ind = find(~isMatch);% False positive: Index of test box with no matching truth box
-    FN_ind = find(~ismember(1:height(truth.Box), truth_ind(isMatch))); % False Negative: Index of truth box with no matching test box
+    FN_ind = find(~ismember(1:height(truth_box), truth_ind(isMatch))); % False Negative: Index of truth box with no matching test box
 
     n_TP = length(TP_ind_truth);
     n_FP = length(FP_ind);

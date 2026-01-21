@@ -1,6 +1,6 @@
-function calls = filter_calls(calls, opts)
+function detection = filter_calls(detection, opts)
     arguments
-        calls table %
+        detection struct %
         opts.min_duration double = 0 % minimum duration of a USV to be included in the analysis
         opts.min_score double = 0 % Score (confidence) of a USV to be included in the analysis
         opts.include_rejected logical = false; % Should USVs marked as "rejected" be included in the analysis
@@ -8,6 +8,7 @@ function calls = filter_calls(calls, opts)
         opts.max_freq double = 100; % maxiumum frequency allowed for box
     end
 
+    calls = detection.Calls;
     % perform various checks
     calls = calls(calls.Box(:,3) > opts.min_duration, :);
     calls = calls(calls.Score > opts.min_score, :);
@@ -18,4 +19,6 @@ function calls = filter_calls(calls, opts)
     if ~opts.include_rejected
         calls = calls(calls.Accept==1, :);
     end
+
+    detection.Calls = calls;
 end
