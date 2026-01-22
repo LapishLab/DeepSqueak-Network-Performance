@@ -37,6 +37,22 @@ function stats = usv_stats(folder)
 end
 
 
+function calls = load_calls(folder)
+files = string({dir(fullfile(folder, "*.mat")).name})';
+files = fullfile(folder, files);
+calls = table();
+for i=1:height(files)
+    d = load(files(i));
+    % c = d.Calls;
+    % c.file = d.audiodata.Filename;
+    if isempty(d.Calls)
+        fprintf("empyt %s:\n", files(i))
+    end
+    calls = cat(1,calls, d.Calls);
+end
+
+end
+
 
 
 
