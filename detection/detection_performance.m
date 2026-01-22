@@ -44,7 +44,7 @@ function matches = find_matching_detection_files(truth, test)
         is_match = strcmp(test_files, pattern);
         if sum(is_match)==1
             matches(i,1) = truth + filesep + truth_files(i);
-            matches(i,2) = test  + filesep + test_files(is_match);
+            matches(i,2) = test  + filesep + test_files(is_match) + ".mat";
             match_found(i) = true;
         elseif sum(is_match)>1
             warning("Multiple test files found for " + pattern)
