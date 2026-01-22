@@ -10,9 +10,13 @@ train1 ="/home/lapishla/Desktop/network_validation/train1/";
 img_rewrite = "/home/lapishla/Desktop/network_validation/rewrite_img_gen/";
 
 test = img_rewrite;
+
 %%
 [score, details] = detection_performance(brandon, test,include_rejected=false);
 disp(score)
+%%
+plot_intensity(details)
+
 %%
 plot_FN(details)
 % plot_FP(details)
