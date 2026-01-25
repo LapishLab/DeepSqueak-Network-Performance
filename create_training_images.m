@@ -12,6 +12,7 @@ TTable = table();
 % m = [];
 for k = 1:length(mat_files)
     d = load(mat_files(k));
+    d = filter_calls(d);
     d.Calls = d.Calls((d.Calls.Box(:,1)+imLength) <  d.audiodata.Duration,:); % cut out calls within window length of file end
     d.Calls = d.Calls((d.Calls.Box(:,1)+d.Calls.Box(:,3)-imLength) > 0,:); % cut out calls within window length of file start
     
