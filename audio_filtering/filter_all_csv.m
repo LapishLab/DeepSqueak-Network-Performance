@@ -14,13 +14,16 @@ function filter_all_csv(csvPath)
         audioFile = T.audio_file_path{i};
         if ~isfile(audioFile)
             warning('Invalid audio path at row %d: %s', i, audioFile);
+            continue
         end
 
-        whiten_and_resave(audioFile, new_names(i));
+        if ~exist(new_names(i),'file')
+            whiten_and_resave(audioFile, new_names(i));
+        end
         T.whitened_path{i} = new_names(i);
         disp(i)
-        title(num2str(i))
-        pause(0.1)
+        % title(num2str(i))
+        % pause(0.1)
+        writetable(T,csvPath)
     end
-    writetable(T,csvPath)
 end
