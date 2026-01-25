@@ -31,11 +31,11 @@ audio_out = audio_out/50;
 audio_out(audio_out>1)=1;
 audio_out(audio_out<-1)=-1;
 
-figure(1);
-subplot(1,2,1)
-plot_spectrum_data(original_audio(1:fs),fs)
-subplot(1,2,2)
-plot_spectrum_data(audio_out(1:fs),fs)
+% figure(1);
+% subplot(1,2,1)
+% plot_spectrum_data(original_audio(1:fs),fs)
+% subplot(1,2,2)
+% plot_spectrum_data(audio_out(1:fs),fs)
 
 %% get audio metadata
 info = audioinfo(wav);

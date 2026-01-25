@@ -16,12 +16,12 @@ function [filter, frequency] = gen_filter(audio, fs, resample_rate)
     frequency=frequency(:);%reshape into rows
 
     % plot original and downsampled power
-    figure(1); clf; hold on;
-    plot(f,power)
-    plot(frequency,new_power)
-    yscale('log')
-    xlabel('frequency (Hz)')
-    ylabel('Power')
+    % figure(1); clf; hold on;
+    % plot(f,power)
+    % plot(frequency,new_power)
+    % yscale('log')
+    % xlabel('frequency (Hz)')
+    % ylabel('Power')
 
     % create filter from power
     filter = 1 ./ (sqrt(new_power));
