@@ -1,4 +1,4 @@
-function plot_spectrum(audio_file, start, stop)
+function [F,T,P] = plot_spectrum(audio_file, start, stop)
     [y, Fs] = load_audio_segment(audio_file, start, stop);
     
 
