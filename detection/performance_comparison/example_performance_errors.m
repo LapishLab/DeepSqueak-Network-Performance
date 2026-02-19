@@ -11,7 +11,13 @@ img_rewrite = "/home/lapishla/Desktop/network_validation/rewrite_img_gen/";
 
 test = img_rewrite;
 
-%%
+
+%% for Katie TAC
+brandon = "/home/lapishla/Desktop/TAC_pilot_analysis/brandon_whitened/";
+% brandon = "/home/lapishla/Desktop/TAC_pilot_analysis/brandon_raw_audio/"
+% test = "/home/lapishla/Desktop/TAC_pilot_analysis/net/";
+test = "/home/lapishla/Desktop/TAC_pilot_analysis/No_FP/";
+%
 [score, details] = detection_performance(brandon, test,include_rejected=false);
 disp(score)
 %%
