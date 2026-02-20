@@ -31,7 +31,7 @@ while sum(greaterthannoise)<5
     end
     if iter > 10
        disp('Warning: Extremely short call or no discernable contour')
-       greaterthannoise = true(1,width(freq_inds));
+       greaterthannoise = false(1,width(freq_inds));
        break
     end
 end
