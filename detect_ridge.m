@@ -4,12 +4,11 @@ arguments
     opt.ampThresh double = 0.8250; % amplitude threshold
     opt.entropyThesh double = 0.2150; % Entropy threshold
 end
+spect = imgaussfilt(spect, [.5,.5]);
+
 %% Ridge Detection
 % Calculate entropy at each time point
 entropy = geomean(spect,1) ./ mean(spect,1);
-entropy= smooth(entropy,0.1,'rlowess')';
-
-
 brightThreshold=prctile(spect(:), opt.ampThresh*100);
 
 %% Chose single pixel for each timepoint
@@ -26,12 +25,5 @@ amplitude = amplitude(greaterthannoise);
 freq_inds = freq_inds(greaterthannoise);
 time_inds = find(greaterthannoise);
 
-%% Try smoothing over frequency
-try
-    freq_inds = smooth(time_inds, freq_inds, 0.025, 'rlowess');
-    freq_inds = round(freq_inds);
-catch
-    disp('Cannot apply smoothing. The line is probably too short');
-end
 
 end
