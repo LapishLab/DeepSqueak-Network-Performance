@@ -1,12 +1,16 @@
-function [amplitude, freq_inds, time_inds] = detect_ridge(spect)
+function [amplitude, freq_inds, time_inds] = detect_ridge(spect, opt)
+arguments
+    spect double % Spectrogram values (Frequency x Time) 
+    opt.ampThresh double = 0.8250; % amplitude threshold
+    opt.entropyThesh double = 0.2150; % Entropy threshold
+end
 %% Ridge Detection
 % Calculate entropy at each time point
 entropy = geomean(spect,1) ./ mean(spect,1);
 entropy= smooth(entropy,0.1,'rlowess')';
 
-AmplitudeThreshold= 0.8250;
-EntropyThreshold= 0.2150;
-brightThreshold=prctile(spect(:),AmplitudeThreshold*100);
+
+brightThreshold=prctile(spect(:), opt.ampThresh*100);
 
 %% Chose single pixel for each timepoint
 [amplitude,freq_inds] = max(spect,[],1);
@@ -20,10 +24,10 @@ greaterthannoise = false(1, size(spect, 2));
 while sum(greaterthannoise)<5
     if iter==1
         greaterthannoise = greaterthannoise | amplitude  > brightThreshold;
-        greaterthannoise = greaterthannoise & 1-entropy  > EntropyThreshold;
+        greaterthannoise = greaterthannoise & 1-entropy  > opt.entropyThesh;
     else
         greaterthannoise = greaterthannoise | amplitude  > brightThreshold / 1.1 ^ iter;
-        greaterthannoise = greaterthannoise & 1-entropy > EntropyThreshold / 1.1 ^ iter;
+        greaterthannoise = greaterthannoise & 1-entropy > opt.entropyThesh / 1.1 ^ iter;
     end
     iter = iter + 1;
     if iter > 2
