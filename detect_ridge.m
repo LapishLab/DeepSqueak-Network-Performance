@@ -1,29 +1,71 @@
-function [amplitude, freq_inds, time_inds] = detect_ridge(spect, opt)
+function [times, frequencies, amplitudes] = detect_ridge(calls, filename, opt)
 arguments
-    spect double % Spectrogram values (Frequency x Time) 
-    opt.ampThresh double = 0.8250; % amplitude threshold
-    opt.entropyThesh double = 0.2150; % Entropy threshold
+    calls table
+    filename string
+    opt.ampThresh double = 2; % standard deviations above median
+    opt.smoothing double = [2,1]; % smoothing sigma for frequency and time
+    opt.plot logical = false % Should a plot be created
 end
-spect = imgaussfilt(spect, [.5,.5]);
 
-%% Ridge Detection
-% Calculate entropy at each time point
-entropy = geomean(spect,1) ./ mean(spect,1);
-brightThreshold=prctile(spect(:), opt.ampThresh*100);
+times  = cell(height(calls), 1);
+frequencies = cell(height(calls), 1);
+amplitudes = cell(height(calls), 1);
 
-%% Chose single pixel for each timepoint
-[amplitude,freq_inds] = max(spect,[],1);
+for i=1:height(calls)
+    %% Get audio segment
+    start_time = calls.Box(i,1);
+    stop_time = sum(calls.Box(i,[1,3]));
+    [y, Fs] = load_audio_segment(filename, start_time, stop_time);
 
-%% Get index of the time points where aplitude is greater than theshold
-% % iteratively lower threshholds until at least 6 points are selected
-% % threshold is lowered over a max of 10 iterations (38.55% of its original value) 
+    %% Get spectrogram
+    window = round(Fs * 0.0032);% Deepsqueak default = .0032 s
+    nfft = round(Fs * 0.0032);% Deepsqueak default = .0032 s
+    [~,F,T,P] = spectrogram(y,window,[],nfft, Fs); % defaults to 50% overlap with []
+    T = T+start_time;
+    P = sqrt(P); % Convert power to amplitude
+    P = imgaussfilt(P, opt.smoothing); % smooth power
+    
+    %% Chose single brightest pixel for each timepoint within the box frequencies
+    min_freq = calls.Box(i,2) * 1000;
+    max_freq = sum(calls.Box(i,[2,4])) * 1000;
+    in_box = F>min_freq & F<max_freq;
+    [amp,max_inds] = max(P(in_box,:), [], 1);
+    box_f = F(in_box);
+    freq = box_f(max_inds);
+    
+    %% Are values above threshold (40-80 kHz used for baseline)
+    normFreq = F>40e3 & F<80e3;
+    normVals = P(normFreq,:);
+    thres = median(normVals) + std(normVals)*opt.ampThresh;
+    greaterthannoise = amp > thres;
 
-greaterthannoise = amplitude>brightThreshold & (1-entropy)>opt.entropyThesh;
 
-%% Restrict to pixels greater than noise
-amplitude = amplitude(greaterthannoise);
-freq_inds = freq_inds(greaterthannoise);
-time_inds = find(greaterthannoise);
+    %% Restrict to pixels greater than noise
+    amplitudes{i} = amp(greaterthannoise);
+    frequencies{i} = freq(greaterthannoise);
+    times{i} = T(greaterthannoise);
 
+
+    if opt.plot
+        %% Plot spectrogram
+        clf
+        imagesc(T, F, P); 
+        axis xy;
+        ylabel('Frequency (kHz)');
+        xlabel('Time (s)');
+        c = colorbar;
+        c.Label.String = 'Amplitude';
+        
+        clim([0 prctile(P(:),99)])
+        
+        hold on 
+        scatter(times{i},  frequencies{i}, 'filled', 'red')
+        
+        box = calls.Box(i,:);
+        box([2,4]) = box([2,4]) * 1000;
+        rectangle('pos', box);
+        pause(0.1);
+    end
+end
 
 end
