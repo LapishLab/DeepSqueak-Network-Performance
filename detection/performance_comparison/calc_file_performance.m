@@ -24,6 +24,10 @@ function s = calc_file_performance(truth_file, test_file, opts)
     [max_overlap, truth_ind] = max(overlap); % max overlap for each test box 
     isMatch = max_overlap>opts.min_overlap; % Does each test box have a matching truth box?
 
+    if isempty(truth_box) % If there are no truth boxes, then none of the test boxes have matches
+        isMatch = false(1, height(test_box));
+    end
+
     TP_ind_truth = truth_ind(isMatch);% True positive: truth box index
     TP_ind_test = find(isMatch);% True positive: test box index
     FP_ind = find(~isMatch);% False positive: Index of test box with no matching truth box
