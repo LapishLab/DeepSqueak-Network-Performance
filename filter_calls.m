@@ -6,6 +6,7 @@ function detection = filter_calls(detection, opts)
         opts.include_rejected logical = false; % Should USVs marked as "rejected" be included in the analysis
         opts.min_freq double = 18; % minimum frequency allowed for box
         opts.max_freq double = 100; % maxiumum frequency allowed for box
+        opts.include_non_usv logical = false; % Should calls with labels other than USV be included?
     end
 
     calls = detection.Calls;
@@ -19,6 +20,9 @@ function detection = filter_calls(detection, opts)
     % Only keep accepted calls
     if ~opts.include_rejected
         calls = calls(calls.Accept==1, :);
+    end
+    if ~opts.include_non_usv
+        calls = calls(strcmpi(string(calls.Type), "USV"), :);
     end
 
     detection.Calls = calls;
