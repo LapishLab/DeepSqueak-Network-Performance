@@ -9,9 +9,11 @@ validate = "/home/lapishla/Documents/GitHub/DeepSqueak-Network-Performance/detec
 
 train_img = "/home/lapishla/Desktop/test/train";
 validate_img = "/home/lapishla/Desktop/test/validate";
+
+settings = spectrogram_settings();
 %%
-create_training_images(train,train_img)
-create_training_images(validate,validate_img)
+create_training_images(train,train_img,settings)
+create_training_images(validate,validate_img,settings)
 %%
 [detector, info, options] = train_detector(train_img, validate_img, net);
 

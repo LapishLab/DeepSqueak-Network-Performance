@@ -1,153 +1,122 @@
-function create_training_images(input_dir, output_dir)
+function create_training_images(input_dir, output_dir, settings)
 mat_files = fullfile(input_dir,{dir(fullfile(input_dir,"*.mat")).name}');
 mkdir(fullfile(output_dir,"images"));     
-% Get training settings
-wind = .0032;
-noverlap = .0016;
-nfft = .0032;
-imLength = .5;
 
 TTable = table();
-
-% m = [];
 for k = 1:length(mat_files)
     d = load(mat_files(k));
-    d = filter_calls(d);
-    d.Calls = d.Calls((d.Calls.Box(:,1)+imLength) <  d.audiodata.Duration,:); % cut out calls within window length of file end
-    d.Calls = d.Calls((d.Calls.Box(:,1)+d.Calls.Box(:,3)-imLength) > 0,:); % cut out calls within window length of file start
+    d = filter_calls(d); %TODO: consider input as calls instead of
+    % directory so that we can filter outside of this function.
     
     if height(d.Calls)==0
         continue
     end
 
     [audio,Fs] = audioread(d.audiodata.Filename);
+    img_dur = settings.img_dur;
+    audio_dur = length(audio)/Fs;
     
+    % Only use images that contain calls
+    image_start = 0:img_dur*(1-settings.img_overlap):audio_dur-img_dur; % in seconds
+    image_stop = image_start + img_dur;
 
-    call_start = d.Calls.Box(:, 1);
-    call_width = d.Calls.Box(:, 3);
+    call_start = d.Calls.Box(:,1);
+    call_width = d.Calls.Box(:,3);
     call_stop = call_start + call_width;
 
-    % Calculate Groups of Calls
-    bout_inds = get_bout_inds(call_start,call_stop,imLength);
-    % Choose cut times
-    image_start_time = choose_cuts(bout_inds,call_start,call_stop, imLength);
+    call_freq = d.Calls.Box(:,2) * 1000;
+    call_height = d.Calls.Box(:,4) * 1000;
 
-    image_start_ind = round(image_start_time*Fs);
-    image_stop_ind = round(imLength*Fs) + image_start_ind;
+    has_calls = any(call_start>image_start & call_stop<image_stop);
+    image_start = image_start(has_calls);
 
-    vars = {'imageFilename', 'USV'};
-    varTypes = {'string', 'cell'};
 
-    file_table = table('Size', [length(image_start_ind), length(vars)], ...
+    vars = {'imageFilename', 'Boxes', 'Labels'};
+    varTypes = {'string', 'cell', 'cell'};
+
+    file_table = table('Size', [length(image_start), length(vars)], ...
               'VariableNames', vars, ...
               'VariableTypes', varTypes);
 
-    for b = 1:length(image_start_ind)
-        a = audio(image_start_ind(b):image_stop_ind(b));
+    for b = 1:length(image_start)
+        start_ind = round(image_start(b)*Fs)+1; % add 1 because index by 1 instead of 0
+        stop_ind = start_ind + round(img_dur*Fs)-1;
+        a = audio(start_ind:stop_ind);
 
         % Make the spectrogram
-        [~, fr, ti, p] = spectrogram(a,round(Fs*wind),round(Fs*noverlap),round(Fs*nfft),Fs);
-        % -- Auto Scale (p)
-        im=autoScale(p);
+        F = settings.min_frequency : settings.step_frequency : settings.max_frequency;
+        noverlap = round(settings.noverlap * Fs);
+        wind = round(settings.wind * Fs);
+        [~,~,T,im] = spectrogram(a,wind,noverlap,F,Fs,'psd');
+        T = T + image_start(b);
 
+        %%
+        % im = flipud(P);
+        im = sqrt(im); % amplitude instead of power
 
-        USV_inds = bout_inds(b,1):bout_inds(b,2);
-        bout_boxes = d.Calls.Box(USV_inds,:);
+         % gaussian smoothing
+        sigma_t = settings.smth_time / (T(2)-T(1));
+        sigma_f = settings.smth_freq / (F(2)-F(1));
+        im = imgaussfilt(im, [sigma_f, sigma_t]);
 
-        % convert box times to pixels
-        bout_boxes(:,1) = bout_boxes(:,1) - image_start_time(b);
-        bout_boxes(:,[1,3]) = bout_boxes(:,[1,3])/imLength*size(im,2);
+        % im = im / prctile(max(im), 99, 'all'); %
+        % im = im / .0002;
+        % im = im / (median(std(im(F>40e3,:))) * 40);
+        im = im / (10*median(median(im)));
+        im(im>1) = 1;
 
-        % convert box frequency to pixels
-        bout_boxes(:,2) = bout_boxes(:,2) - min(fr);
-        bout_boxes(:, [2,4])=bout_boxes(:, [2,4])/(max(fr)-min(fr))*size(im,1)*1000;
-        bout_boxes(:,2) = size(im,1) - bout_boxes(:,2) - bout_boxes(:,4); %Compensate for vertical flip
-        
-        % round to nearest pixel
-        bout_boxes = ceil(bout_boxes);
+        %%
+        % Get boxes fully contained in image
+        in_img = call_start > T(1) & call_stop < T(end);
 
-        % figure(1); clf; hold on
-        % imagesc(im);
-        % rectangle('Position',bout_boxes, 'EdgeColor',   'r')
+        boxes = nan(sum(in_img), 4);
 
+        boxes(:,1) = (call_start(in_img)-T(1)) / (T(2)-T(1));
+        boxes(:,3) = call_width(in_img) / (T(2)-T(1));
 
-        % resize images for 300x300 YOLO Network (Could be bigger but works nice)
-        % targetSize = [413 413];
-        % sz=size(im);
-        % im = imresize(im,targetSize);
-        % box = bboxresize(box,targetSize./sz);
+        boxes(:,2) = (call_freq(in_img)-F(1)) / (F(2)-F(1));
+        boxes(:,4) = call_height(in_img) / (F(2)-F(1));
 
-        % sub = im(bout_boxes(1,2):(bout_boxes(1,2)+bout_boxes(1,4)), bout_boxes(1,1):(bout_boxes(1,1)+bout_boxes(1,3)));
-        % m = [m,max(sub(:))];
-        % imagesc(sub)
-        % pause(0.1)
+        % TODO: Blacken start and end of image if overlapping with cal
+        % on_start_edge = call_start<T(1) & call_stop>T(end);
+
+        %% Plot
+        figure(1); clf; hold on
+        colorImg = repmat(im,[1,1,3]);
+        saturated = im>=1;
+        colorImg(:,:,2) = im .* ~saturated;
+        colorImg(:,:,3) = im .* ~saturated;
+        imshow(colorImg);
+        axis on;
+        xlim([0 width(im)]+0.5)
+        ylim([0 height(im)]+0.5)
+        for r=1:height(boxes)
+            rectangle('Position',boxes(r,:), 'EdgeColor',   'b')
+        end
+
+        %%
 
         filename = fullfile(output_dir, sprintf('images/%d_%d.png', k, b));
+
+
+        %TODO Use all color channels to convey info (24 bit number)
+        % map = [0 0 0; 1 0 0; 1 1 0; 1 1 1];
+        % colorImg = ind2rgb(im, map);
+        im = repmat(im, [1,1,3]);
+        
         imwrite(im, filename, 'BitDepth', 8);
 
         file_table.imageFilename(b)= filename;
-        file_table.USV(b) = {bout_boxes};
+        file_table.Boxes(b) = {boxes};
+        file_table.Labels(b) = {d.Calls.Type(in_img)};
     end
     TTable = cat(1,TTable,file_table);
 end
 output = struct();
 output.TTable = TTable;
-output.wind = wind;
-output.noverlap = noverlap;
-output.nfft=nfft;
-output.imLength = imLength;
-output.imScale=@autoScale;
+output.settings = settings;
 
 output_filename = fullfile(output_dir,'img_table.mat');
 save(output_filename,'-struct','output');
 
-end
-
-
-function [im] = autoScale(p)
-p = sqrt(p); % amplitude instead of power
-p = flipud(p);
-% im = imadjust(p);
-% im = p / max(p(:));
-im=p/.002;
-end
-
-
-function inds = get_bout_inds(call_start,call_stop,image_width)
-    buffer = .05; 
-    inRange = triu(pdist2(call_start,call_stop) < (image_width-buffer));
-
-    [row, col] = find(inRange);
-    
-    last_USV_ind = accumarray(row, col, [], @max, nan);
-    last_USV_ind = last_USV_ind(~isnan(last_USV_ind));
-    first_USV_ind = unique(row);
-    
-    
-    repeats = [false; diff(last_USV_ind)==0];
-
-    first_USV_ind(repeats) = [];
-    last_USV_ind(repeats) = [];
-
-    inds = [first_USV_ind, last_USV_ind];
-end
-
-function image_start = choose_cuts(bout_inds,call_start,call_stop,image_width)
-
-    buffer = .01; 
-    bout_start = call_start(bout_inds(:,1));
-    bout_stop = call_stop(bout_inds(:,2));
-    
-    start_earliest = bout_stop - image_width + buffer;
-    previous_call = call_stop(bout_inds(2:end,1)-1);
-    start_earliest(2:end) = max([start_earliest(2:end),previous_call], [], 2);
-    
-    
-    start_latest = bout_start-buffer;
-    next_call = call_start(bout_inds(1:end-1,2)+1);
-    start_latest(1:end-1) = min([start_latest(1:end-1), next_call-image_width], [], 2);
-    
-    
-    rand_scale = randi([1,99], size(start_earliest))/100;
-    image_start = start_earliest + rand_scale .* (start_latest-start_earliest);
 end
