@@ -19,31 +19,8 @@ function s = calc_file_performance(truth_file, test_file, opts)
 
     truth_box = truth.Calls.Box;
     test_box = test.Calls.Box;
-    %% calculator overlap
-    overlap = calc_box_overlap(truth_box, test_box);%[truth x test] matrix
-    [max_overlap, truth_ind] = max(overlap); % max overlap for each test box 
-    isMatch = max_overlap>opts.min_overlap; % Does each test box have a matching truth box?
-
-    if isempty(truth_box) % If there are no truth boxes, then none of the test boxes have matches
-        isMatch = false(1, height(test_box));
-    end
-
-    TP_ind_truth = truth_ind(isMatch);% True positive: truth box index
-    TP_ind_test = find(isMatch);% True positive: test box index
-    FP_ind = find(~isMatch);% False positive: Index of test box with no matching truth box
-    FN_ind = find(~ismember(1:height(truth_box), truth_ind(isMatch))); % False Negative: Index of truth box with no matching test box
-
-    n_TP = length(TP_ind_truth);
-    n_FP = length(FP_ind);
-    n_FN = length(FN_ind);
-
-    s = struct();
-    s.recall = n_TP / (n_TP + n_FN);
-    s.precision = n_TP / (n_TP + n_FP);
-    s.F1 = 2 * s.precision * s.recall / (s.precision + s.recall);
-    s.TP = {[TP_ind_truth ; TP_ind_test]'};
-    s.FN = {FN_ind'}; 
-    s.FP = {FP_ind'}; 
+    %% calculator confusion matrix statistics 
+    s = get_confusion_from_overlap(truth_box, test_box, min_overlap=opts.min_overlap);
 end
 
 
