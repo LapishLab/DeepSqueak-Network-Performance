@@ -5,6 +5,7 @@ function output = get_confusion_from_overlap(truth_box, test_box, opts)
         test_box double   % Test boxes
         opts.min_overlap double = 0.1 % minimum overlap of detection boxes to be considered matching
     end
+    % TODO: determine best way to handle differing X & Y units impact on overlap
 
     overlap = calc_box_overlap(truth_box, test_box);%[truth x test] matrix
     [max_overlap, truth_ind] = max(overlap,[],1); % max overlap for each test box 
