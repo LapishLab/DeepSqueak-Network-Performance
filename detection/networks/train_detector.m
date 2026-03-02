@@ -1,5 +1,5 @@
 function [detector, info, op] = train_detector(train_folder, validation_folder, net_path)
-[train, training_table] = load_datastore(train_folder);
+train = load_datastore(train_folder);
 val = load_datastore(validation_folder);
 
 op = trainingOptions('sgdm');
@@ -23,20 +23,16 @@ old_detector = load(net_path).detector;
 
 network = struct();
 network.detector = detector;
-network.options = op;
 network.info = info;
-network.wind = training_table.wind;
-network.noverlap = training_table.noverlap;
-network.nfft = training_table.nfft;
-network.imLength = training_table.imLength;
-network.imScale = training_table.imScale;
+% network.settings = settings;
+
 
 timestamp = string(datetime('now', 'Format', 'yyyy-MM-dd_HH-mm-ss'));
 file_path = fullfile(fileparts(net_path), "lapish_"+timestamp+".mat");
 save(file_path, '-struct', "network")
 end
 
-function [data, d]= load_datastore(folder)
+function data = load_datastore(folder)
     % load and concatonate TTables
     fnames = {dir(fullfile(folder,"*.mat")).name};
     ttables = table();
@@ -44,6 +40,7 @@ function [data, d]= load_datastore(folder)
         d = load(fullfile(folder,fnames{i}));
         ttables = cat(1, ttables, d.TTable);
     end
+    ttables = ttables(~cellfun(@isempty, ttables.Labels), :);
 
     % correct image paths (if using GUI image generation and copying files)
     if ~exist(ttables.imageFilename(1), 'file')
@@ -53,7 +50,7 @@ function [data, d]= load_datastore(folder)
     end
 
     % Convert to datastore
-    blds = boxLabelDatastore(ttables(:,2:end));
+    blds = boxLabelDatastore( ttables(:,{'Boxes','Labels'}));
     imds = imageDatastore(string(ttables.imageFilename));
     data = combine(imds, blds);
 end
