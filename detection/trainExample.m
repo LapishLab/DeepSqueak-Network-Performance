@@ -16,4 +16,8 @@ create_training_images(train,train_img,settings)
 create_training_images(validate,validate_img,settings)
 %%
 [detector, info, options] = train_detector(train_img, validate_img, net);
+%% Run validation on the generated images
+
+im_table = load(fullfile(validate_img, 'img_table.mat'));
+detect_pregenerated_images(detector,im_table)
 
