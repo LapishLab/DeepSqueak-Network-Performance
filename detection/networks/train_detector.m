@@ -25,7 +25,9 @@ op.CheckpointFrequency=10;
 op.ValidationFrequency=10; %Unit in iterations
 op.Plots='training-progress';     
 op.ValidationData=val;
-op.CheckpointPath = fullfile(net_path, 'Checkpoint');
+[folder,file,~] = fileparts(net_path);
+op.CheckpointPath = fullfile(folder, file+"_checkpoint");
+[~] = mkdir(op.CheckpointPath);
 op.OutputNetwork='best-validation';
 
 
