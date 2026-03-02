@@ -1,4 +1,9 @@
 function create_training_images(input_dir, output_dir, settings)
+arguments
+    input_dir string % Path to folder of detection mat files
+    output_dir string % Where to save images and label table 
+    settings struct = spectrogram_settings() % Settings for spectrogram
+end
 mat_files = fullfile(input_dir,{dir(fullfile(input_dir,"*.mat")).name}');
 mkdir(fullfile(output_dir,"images"));     
 
