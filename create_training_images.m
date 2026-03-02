@@ -1,8 +1,9 @@
-function create_training_images(input_dir, output_dir, settings)
+function create_training_images(input_dir, output_dir, settings, opts)
 arguments
     input_dir string % Path to folder of detection mat files
     output_dir string % Where to save images and label table 
     settings struct = spectrogram_settings() % Settings for spectrogram
+    opts.plot logical = false
 end
 mat_files = fullfile(input_dir,{dir(fullfile(input_dir,"*.mat")).name}');
 mkdir(fullfile(output_dir,"images"));     
@@ -65,17 +66,20 @@ for k = 1:length(mat_files)
         % on_start_edge = call_start<T(1) & call_stop>T(end);
 
         %% Plot
-        figure(1); clf; hold on
-        colorImg = repmat(im,[1,1,3]);
-        saturated = im>=1;
-        colorImg(:,:,2) = im .* ~saturated;
-        colorImg(:,:,3) = im .* ~saturated;
-        imshow(colorImg);
-        axis on;
-        xlim([0 width(im)]+0.5)
-        ylim([0 height(im)]+0.5)
-        for r=1:height(boxes)
-            rectangle('Position',boxes(r,:), 'EdgeColor',   'b')
+        if opts.plot
+            figure(1); clf; hold on
+            colorImg = repmat(im,[1,1,3]);
+            saturated = im>=1;
+            colorImg(:,:,2) = im .* ~saturated;
+            colorImg(:,:,3) = im .* ~saturated;
+            imshow(colorImg);
+            axis on;
+            xlim([0 width(im)]+0.5)
+            ylim([0 height(im)]+0.5)
+            for r=1:height(boxes)
+                rectangle('Position',boxes(r,:), 'EdgeColor',   'b')
+            end
+            pause(.1)
         end
 
         %% Save image file and add entry to table
