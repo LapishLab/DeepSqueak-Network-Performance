@@ -1,4 +1,4 @@
-function create_training_images(input_dir, output_dir, settings, opts)
+function output = create_training_images(input_dir, output_dir, settings, opts)
 arguments
     input_dir string % Path to folder of detection mat files
     output_dir string % Where to save images and label table 
@@ -103,8 +103,8 @@ end
 output = struct();
 output.TTable = TTable;
 output.settings = settings;
+output.image_size = size(im);
 
 output_filename = fullfile(output_dir,'img_table.mat');
 save(output_filename,'-struct','output');
-
 end

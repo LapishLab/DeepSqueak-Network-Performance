@@ -1,19 +1,11 @@
 function [detector, info, op] = train_detector(train_folder, validation_folder, net_path)
+arguments
+    train_folder string
+    validation_folder string
+    net_path string
+end
 train = load_datastore(train_folder);
 val = load_datastore(validation_folder);
-
-
-contents = readall(train);
-labels = unique(cat(1,contents{:,3}));
-model = yoloxObjectDetector('small-coco', labels, InputSize=[1248 384 3]);
-
-    % 'small-coco'
-    % 'tiny-coco'
-    % 'medium-coco'
-    % 'large-coco'
-    % 'nano-coco'
-
-
 
 op = trainingOptions('sgdm');
 op.InitialLearnRate=0.001;
@@ -32,7 +24,7 @@ op.OutputNetwork='best-validation';
 
 
 % Load existing network
-% old_detector = load(net_path).detector;
+model = load(net_path).detector;
 
 % Train the YOLO v2 network.
 [detector,info] = trainYOLOXObjectDetector(train,model,op);

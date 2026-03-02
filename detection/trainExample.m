@@ -1,5 +1,5 @@
 clear
-net = "/home/lapishla/Documents/GitHub/DeepSqueak/Networks/Mouse Detector YOLO R2.mat";
+% net = "/home/lapishla/Documents/GitHub/DeepSqueak/Networks/YOLOX2026-02-26_08-17-26.mat";
 % train = "/home/lapishla/Desktop/training/training_images/";
 % validate = "/home/lapishla/Desktop/training/validation_images/";
 
@@ -11,13 +11,15 @@ train_img = "/home/lapishla/Desktop/test/train";
 validate_img = "/home/lapishla/Desktop/test/validate";
 
 settings = spectrogram_settings();
-%%
-create_training_images(train,train_img,settings)
-create_training_images(validate,validate_img,settings)
-%%
+%% Create training images
+train_info = create_training_images(train,train_img,settings);
+val_info = create_training_images(validate,validate_img,settings);
+%% Make a fresh detector
+net = "/home/lapishla/Documents/GitHub/DeepSqueak/Networks/freshYOLOX.mat";
+detector = generate_blank_YOLOX(net, train_info);
+%% Train the detector
 [detector, info, options] = train_detector(train_img, validate_img, net);
 %% Run validation on the generated images
-
 im_table = load(fullfile(validate_img, 'img_table.mat'));
 detect_pregenerated_images(detector,im_table)
 
