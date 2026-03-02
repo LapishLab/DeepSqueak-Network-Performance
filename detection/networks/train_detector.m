@@ -12,7 +12,7 @@ op.CheckpointFrequency=10;
 op.ValidationFrequency=10; %Unit in iterations
 op.Plots='training-progress';     
 op.ValidationData=val;
-% 'CheckpointPath',tempdir,...
+op.CheckpointPath = fullfile(net_path, 'Checkpoint');
 op.OutputNetwork='best-validation';
 
 % Load existing network
