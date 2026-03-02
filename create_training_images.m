@@ -9,7 +9,7 @@ mat_files = fullfile(input_dir,{dir(fullfile(input_dir,"*.mat")).name}');
 mkdir(fullfile(output_dir,"images"));     
 
 TTable = table();
-for k = 1:4%length(mat_files)
+for k = 1:length(mat_files)
     d = load(mat_files(k));
     d = filter_calls(d); %TODO: consider input as calls instead of
     % directory so that we can filter outside of this function.
@@ -90,7 +90,7 @@ for k = 1:4%length(mat_files)
         %TODO Use all color channels to convey info (24 bit number)
         % map = [0 0 0; 1 0 0; 1 1 0; 1 1 1];
         % colorImg = ind2rgb(im, map);
-        % im = repmat(im, [1,1,3]);
+        im = repmat(im, [1,1,3]);
         
         imwrite(im, filename, 'BitDepth', 8);
 
