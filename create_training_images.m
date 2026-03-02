@@ -39,34 +39,13 @@ for k = 1:length(mat_files)
               'VariableTypes', varTypes);
 
     for b = 1:length(image_start)
+        %% generate spectrogram of audio segment
         start_ind = round(image_start(b)*Fs)+1; % add 1 because index by 1 instead of 0
         stop_ind = start_ind + round(img_dur*Fs)-1;
-        a = audio(start_ind:stop_ind);
-
-        % Make the spectrogram
-        F = settings.min_frequency : settings.step_frequency : settings.max_frequency;
-        noverlap = round(settings.noverlap * Fs);
-        wind = round(settings.wind * Fs);
-        [~,~,T,im] = spectrogram(a,wind,noverlap,F,Fs,'psd');
+        [im, T, F] = gen_spect_image(audio(start_ind:stop_ind), Fs, settings);
         T = T + image_start(b);
 
-        %%
-        % im = flipud(P);
-        im = sqrt(im); % amplitude instead of power
-
-         % gaussian smoothing
-        sigma_t = settings.smth_time / (T(2)-T(1));
-        sigma_f = settings.smth_freq / (F(2)-F(1));
-        im = imgaussfilt(im, [sigma_f, sigma_t]);
-
-        % im = im / prctile(max(im), 99, 'all'); %
-        % im = im / .0002;
-        % im = im / (median(std(im(F>40e3,:))) * 40);
-        im = im / (10*median(median(im)));
-        im(im>1) = 1;
-
-        %%
-        % Get boxes fully contained in image
+        %% Get boxes fully contained in image
         in_img = call_start > T(1) & call_stop < T(end);
 
         boxes = nan(sum(in_img), 4);
@@ -94,10 +73,8 @@ for k = 1:length(mat_files)
             rectangle('Position',boxes(r,:), 'EdgeColor',   'b')
         end
 
-        %%
-
+        %% Save image file and add entry to table
         filename = fullfile(output_dir, sprintf('images/%d_%d.png', k, b));
-
 
         %TODO Use all color channels to convey info (24 bit number)
         % map = [0 0 0; 1 0 0; 1 1 0; 1 1 1];
