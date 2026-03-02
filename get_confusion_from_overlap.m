@@ -7,7 +7,7 @@ function output = get_confusion_from_overlap(truth_box, test_box, opts)
     end
 
     overlap = calc_box_overlap(truth_box, test_box);%[truth x test] matrix
-    [max_overlap, truth_ind] = max(overlap); % max overlap for each test box 
+    [max_overlap, truth_ind] = max(overlap,[],1); % max overlap for each test box 
     isMatch = max_overlap>opts.min_overlap; % Does each test box have a matching truth box?
 
     if isempty(truth_box) % If there are no truth boxes, then none of the test boxes have matches
