@@ -13,6 +13,8 @@ for k = 1:length(mat_files)
     d = load(mat_files(k));
     d = filter_calls(d); %TODO: consider input as calls instead of
     % directory so that we can filter outside of this function.
+    fprintf("Starting file %i/%i: %i calls \n", ...
+        k, length(mat_files), height(d.Calls) )
     
     if height(d.Calls)==0
         continue
