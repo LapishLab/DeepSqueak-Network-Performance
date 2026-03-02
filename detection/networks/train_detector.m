@@ -4,7 +4,7 @@ val = load_datastore(validation_folder);
 
 op = trainingOptions('sgdm');
 op.InitialLearnRate=0.001;
-op.MiniBatchSize=16;
+op.MiniBatchSize= 8;
 op.MaxEpochs = 100;
 op.Shuffle='every-epoch'; %(default once)
 op.CheckpointFrequencyUnit='iteration';
