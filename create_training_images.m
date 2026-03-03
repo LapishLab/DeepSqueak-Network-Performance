@@ -71,11 +71,7 @@ for k = 1:length(mat_files)
         %% Plot
         if opts.plot
             figure(1); clf; hold on
-            colorImg = repmat(im,[1,1,3]);
-            saturated = im>=1;
-            colorImg(:,:,2) = im .* ~saturated;
-            colorImg(:,:,3) = im .* ~saturated;
-            imshow(colorImg);
+            imshow(im);
             axis on;
             xlim([0 width(im)]+0.5)
             ylim([0 height(im)]+0.5)
@@ -91,11 +87,6 @@ for k = 1:length(mat_files)
 
         %% Save image file and add entry to table
         filename = fullfile(output_dir, sprintf('images/%d_%d.png', k, b));
-
-        %TODO Use all color channels to convey info (24 bit number)
-        % map = [0 0 0; 1 0 0; 1 1 0; 1 1 1];
-        % colorImg = ind2rgb(im, map);
-        im = repmat(im, [1,1,3]);
         
         imwrite(im, filename, 'BitDepth', 8);
 
