@@ -12,8 +12,8 @@ validate_img = "/home/lapishla/Desktop/test/validate";
 
 settings = spectrogram_settings();
 %% Create training images
-train_info = create_training_images(train,train_img,settings);
-val_info = create_training_images(validate,validate_img,settings);
+% train_info = create_training_images(train,train_img,settings, saveAnnotated=true);
+val_info = create_training_images(validate,validate_img,settings, saveAnnotated=true);
 %% Make a fresh detector
 net = "/home/lapishla/Documents/GitHub/DeepSqueak/Networks/freshYOLOX.mat";
 detector = generate_blank_YOLOX(net, train_info);

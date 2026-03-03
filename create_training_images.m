@@ -4,6 +4,7 @@ arguments
     output_dir string % Where to save images and label table 
     settings struct = spectrogram_settings() % Settings for spectrogram
     opts.plot logical = false
+    opts.saveAnnotated logical = false;
 end
 mat_files = fullfile(input_dir,{dir(fullfile(input_dir,"*.mat")).name}');
 mkdir(fullfile(output_dir,"images"));     
@@ -82,6 +83,10 @@ for k = 1:length(mat_files)
                 rectangle('Position',boxes(r,:), 'EdgeColor',   'b')
             end
             pause(.1)
+        end
+        if opts.saveAnnotated
+        im = insertObjectAnnotation(im, "Rectangle", boxes, ...
+            d.Calls.Type(in_img));
         end
 
         %% Save image file and add entry to table
