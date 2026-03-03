@@ -1,4 +1,4 @@
-function performance = detect_pregenerated_images(detector,image_table, opts)
+function [score, details] = detect_pregenerated_images(detector,image_table, opts)
 arguments
     detector yoloxObjectDetector  
     image_table struct   
@@ -7,21 +7,15 @@ end
 t = image_table.TTable;
 num_images = height(t);
 
-% Prepare an empty table similar to TTable to hold predicted values
-predicted = table(size=[num_images,width(t)], ...
-    VariableNames=t.Properties.VariableNames, ...
-    VariableTypes=t.Properties.VariableTypes);
-predicted.imageFilename = t.imageFilename;
-predicted.Score = cell(height(predicted),1);
+
+img_peformance = cell(num_images,1);
 
 % Loop through images
 for i=1:num_images
     im = imread(t.imageFilename(i));
 
     [bboxes, scores, labels] = detect(detector, im);
-    predicted.Boxes{i} = bboxes;
-    predicted.Labels{i} = labels;
-    predicted.Score{i} = scores;
+    img_peformance{i} = get_confusion_from_overlap(t.Boxes{i}, bboxes);
     
     if opts.plot
         figure(1); clf;
@@ -36,9 +30,18 @@ for i=1:num_images
             all_label, AnnotationColor=all_color);
         imshow(annotated_img)
     end
+    fprintf("completed %i/%i\n",i,num_images)
 end
 
-truth_boxes = cat(1, t.Boxes{:});
-test_boxes = cat(1, predicted.Boxes{:});
-performance = get_confusion_from_overlap(truth_boxes, test_boxes);
+details = struct2table(cat(1,img_peformance{:}));
+
+% calculate final score
+score = struct();
+score.TP = sum(cellfun(@height, details.TP));% total true positive
+score.FN = sum(cellfun(@height, details.FN));% total false negative
+score.FP = sum(cellfun(@height, details.FP));% total false positive
+score.recall = score.TP / (score.TP + score.FN);
+score.precision = score.TP / (score.TP + score.FP);
+score.F1 = 2*score.precision*score.recall/(score.precision+score.recall);
+
 end
