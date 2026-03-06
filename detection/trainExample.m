@@ -21,5 +21,6 @@ detector = generate_blank_YOLOX(net, train_info);
 [detector, info, options] = train_detector(train_img, validate_img, net);
 %% Run validation on the generated images
 im_table = load(fullfile(validate_img, 'img_table.mat'));
-detect_pregenerated_images(detector,im_table)
+%%
+[score,details] = detect_pregenerated_images(detector,im_table)
 
