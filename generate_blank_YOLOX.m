@@ -1,13 +1,10 @@
-function output = generate_blank_YOLOX(save_path, img_info)
-
-labels = unique(cat(1, img_info.TTable.Labels{:}));
-
-if img_info.image_size(3) ~= 3
-    error("3rd dimension of image needs to be size 3 (color image)")
-end
-in_sz = img_info.image_size;
-in_sz([1,2]) = round(in_sz([1,2])/32)*32; %Round XY dimensions to the nearest multiple of 32
-
+function output = generate_blank_YOLOX(save_path, settings, labels)
+% Estimate size of training images and round to nearest mult of 32
+s=settings;
+y_pix = (s.max_frequency-s.min_frequency)/s.step_frequency;
+x_pix = (s.wind/s.noverlap)*(s.img_dur/s.wind)-1;
+mult32 = @(x) round(x/32)*32;
+input_sz = [mult32(y_pix), mult32(x_pix), 3];
 
 % model size options
     % 'nano-coco'
@@ -15,11 +12,11 @@ in_sz([1,2]) = round(in_sz([1,2])/32)*32; %Round XY dimensions to the nearest mu
     % 'small-coco'
     % 'medium-coco'
     % 'large-coco'
-detector = yoloxObjectDetector('small-coco', labels, InputSize=in_sz);
+detector = yoloxObjectDetector('small-coco', labels, InputSize=input_sz);
 
 
 output = struct();
 output.detector = detector;
-output.settings = img_info.settings;
+output.settings = settings;
 save(save_path, '-struct', 'output');
 end

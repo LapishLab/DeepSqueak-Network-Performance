@@ -1,4 +1,4 @@
-function [detector, info, op] = train_detector(train_folder, validation_folder, net_path)
+function network = train_detector(train_folder, validation_folder, net_path)
 arguments
     train_folder string
     validation_folder string
@@ -24,16 +24,14 @@ op.OutputNetwork='best-validation';
 
 
 % Load existing network
-model = load(net_path).detector;
+network = load(net_path);
 
 % Train the YOLO v2 network.
-[detector,info] = trainYOLOXObjectDetector(train,model,op);
+[detector,info] = trainYOLOXObjectDetector(train,network.detector,op);
 
-network = struct();
 network.detector = detector;
 network.info = info;
-% network.settings = settings;
-
+network.training_options = op;
 
 timestamp = string(datetime('now', 'Format', 'yyyy-MM-dd_HH-mm-ss'));
 file_path = fullfile(fileparts(net_path), "lapish_"+timestamp+".mat");
