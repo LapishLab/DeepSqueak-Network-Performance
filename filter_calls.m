@@ -22,7 +22,7 @@ function detection = filter_calls(detection, opts)
         calls = calls(calls.Accept==1, :);
     end
     if ~opts.include_non_usv
-        calls = calls(strcmpi(string(calls.Type), "USV"), :);
+        calls = calls(startsWith(string(calls.Type), "USV"), :);
     end
 
     detection.Calls = calls;
