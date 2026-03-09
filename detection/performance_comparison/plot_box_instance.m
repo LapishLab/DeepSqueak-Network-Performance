@@ -10,7 +10,7 @@ window_size = 0.5;
 time_range = [mid_time-window_size/2, mid_time+window_size/2];
 
 
-plot_spectrum(audio_file, time_range(1), time_range(2))
+plot_spectrum(audio_file, time_range(1), time_range(2));
 plot_boxes(target_box, 'green')
 
 % TODO: restrict other boxes to within this window
