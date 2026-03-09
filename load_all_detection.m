@@ -17,9 +17,9 @@ output.file_names = file_names(:);
 % loop through each file and load it into the table
 for i = 1:length(file_names)
     detection_struct = load(fullfile(folder, file_names(i)));
-    output.audiodata(i) = detection_struct.audiodata;
+    output.audiodata{i} = detection_struct.audiodata;
     calls = detection_struct.Calls;
-    calls.audiodata = repmat(detection_struct.audiodata, height(calls),1); % also save audiodata with calls to simplify later processing if calls concatonated accross files
+    calls.audioFile = string(repmat(detection_struct.audiodata.Filename, height(calls),1)); % also save audiodata with calls to simplify later processing if calls concatonated accross files
     output.Calls(i) = {calls};
 end
 end
