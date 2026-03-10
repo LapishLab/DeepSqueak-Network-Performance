@@ -1,5 +1,7 @@
 function output_table = batch_export_calls(predictions_folder, csv_path, output_folder)
     t = readtable(csv_path, Delimiter=',');
+    t = t(~cellfun(@isempty, t.split), :); % remove audio files not in test/validation/train
+
     [~,id,~] = fileparts(t.link_name);
     t.id = string(id);
     
