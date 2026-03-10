@@ -1,4 +1,4 @@
-function output = export_calls(session_mats, output_folder)
+function output_path = export_calls(session_mats, output_folder)
 % Save a struct with
 % Calls table
 %   box coordinates - ridge times - ridge frequencies - ridge amplitudes
