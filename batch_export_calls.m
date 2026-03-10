@@ -37,6 +37,11 @@ function output_table = batch_export_calls(predictions_folder, csv_path, output_
         % Get list of "expected" detection files for the session
         session_mats = fullfile(predictions_folder, t.id(in_session) + ".mat");
 
+        if any(~cellfun(@exist, session_mats))
+            warning("Missing detection files for session: " + session);
+            continue;
+        end
+
         % Merge these detection files and save at export mat
         output_table.export_path(i) = export_calls(session_mats, output_folder);
 
