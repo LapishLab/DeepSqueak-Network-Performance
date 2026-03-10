@@ -41,10 +41,14 @@ for i=1:height(calls)
 
 
     %% Restrict to pixels greater than noise
-    amplitudes{i} = amp(greaterthannoise);
-    frequencies{i} = freq(greaterthannoise);
-    times{i} = T(greaterthannoise);
+    amp = amp(greaterthannoise);
+    freq = freq(greaterthannoise);
+    T = T(greaterthannoise);
 
+    %% Reshape and save
+    amplitudes{i} = amp(:);
+    frequencies{i} = freq(:);
+    times{i} = double(T(:)); % Also force T to be double precision (sometimes is single)
 
     if opt.plot
         %% Plot spectrogram
