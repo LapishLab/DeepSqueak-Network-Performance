@@ -47,5 +47,7 @@ function output_table = batch_export_calls(predictions_folder, csv_path, output_
 
         % Save the table of export info
         writetable(output_table, output_csv);
+
+        fprintf("Completed file %i/%i \n", i,height(output_table))
     end
 end
