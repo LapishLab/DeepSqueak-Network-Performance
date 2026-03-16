@@ -33,16 +33,17 @@ function generate_audio_links(csvPath)
 
     % generate new file name by combining filename and subject #
     [~, original_name, ext] = fileparts(T.audio_file_path);
-    T.link_name = compose('%s_subject%s%s', ...
+    fname = compose('%s_subject%s%s', ...
         string(original_name), ...
         T.subject, ...
         string(ext) ...
         );
 
-    new_filepath = fullfile(fileparts(csvPath), 'audio', T.split, T.link_name);
+    T.link_name = fullfile(fileparts(csvPath), 'audio', T.split, fname);
+    T.link_name(skip) = "";
 
     % Create folders if necessary
-    audio_folders = unique(fileparts(new_filepath(~skip)));
+    audio_folders = unique(fileparts(T.link_name(~skip)));
     for i=1:length(audio_folders)
         if ~exist(audio_folders(i), 'dir')
             mkdir(audio_folders(i));
@@ -55,7 +56,7 @@ function generate_audio_links(csvPath)
             continue;
         end
         src = T.audio_file_path{i};
-        dest = new_filepath(i);
+        dest = T.link_name{i};
         try
             if isunix || ismac
                 system(sprintf('ln -sf "%s" "%s"', src, dest));
