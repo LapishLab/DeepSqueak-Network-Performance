@@ -25,7 +25,8 @@ t.calls = cellfun(load_fun, local_mat_paths, UniformOutput=false);
 % time 0 is start of the file when started on the Pis 
 [~,id,~] = fileparts(t.export_path);
 time_string = extractBefore(id, 16);
-audio_time = timeofday(datetime(time_string, InputFormat="uuuuMMdd_HHmmss"));
+audio_datetime = datetime(time_string, InputFormat="uuuuMMdd_HHmmss");
+audio_time = timeofday(audio_datetime);
 
 % issue time
 % when MedPC boxes were issued 
