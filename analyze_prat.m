@@ -1,6 +1,6 @@
+% This script requires https://github.com/raacampbell/shadedErrorBar
 % Navigate to export directory before running script
 export_path = pwd();
-
 export_csv = fullfile(export_path, "Export.csv");
 
 %% load table, force all variables as string to prevent issueTimes from getting formatted weird
