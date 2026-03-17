@@ -7,6 +7,7 @@ opts = detectImportOptions(export_csv, Delimiter=",");
 opts = setvartype(opts, opts.SelectedVariableNames, 'string');
 t = readtable(export_csv, opts);
 %% Remove any rows which didn't have exports
+% maybe add removing single rats? will make medPC parser faster 
 t = t(~cellfun(@isempty, t.export_path), :);
 
 %% load all call tables into this session table
@@ -14,15 +15,19 @@ t.calls = cellfun(@(x) load(x).calls, t.export_path, UniformOutput=false);
 
 %% Synchronize time
 % audio time
+% time 0 is start of the file when started on the Pis 
 [~,id,~] = fileparts(t.export_path);
 time_string = extractBefore(id, 16);
 audio_time = timeofday(datetime(time_string, InputFormat="uuuuMMdd_HHmmss"));
 
 % issue time
+% when MedPC boxes were issued 
 t.issueTime = pad(t.issueTime, 6, 'left','0');
 issue_time = timeofday(datetime(t.issueTime, InputFormat="HHmmss"));
 
 %% find audio offset time and shift (ONLY RUN ONCE)
+% time distance between pi start and medPC issue 
+% maybe change? 
 audio_offset = seconds(audio_time-issue_time);
 for i=1:height(audio_offset)
     calls = t.calls{i};
@@ -34,6 +39,7 @@ for i=1:height(audio_offset)
 end
 
 %% Load the med structs into the table
+% go back up to find med-pc folder in datastar and then parses them out 
 for i=1:height(t)
     t.med_struct{i} = getMedFile(t.session_path{i}, t.subject{i});
 end
@@ -84,6 +90,7 @@ all_licks = cat(1, lick_rate_l, lick_rate_r);
 sem = @(x) std(x, 'omitnan')/sqrt(sum(~isnan(x(:,1))));
 avg_nan = @(x) mean(x, 'omitnan');
 %% usv rate vs licks
+% find functions that use the ridges for time and frequency of squeaks
 figure(1); clf; hold on;
 x = (edges(1:end-1)+diff(edges)/2) / 60;
 shadedErrorBar(x, usv_rate, {avg_nan, sem}, 'lineProps',{ 'Color', 'green', 'DisplayName', 'USVs'})
