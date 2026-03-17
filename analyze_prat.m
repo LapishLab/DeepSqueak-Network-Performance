@@ -1,4 +1,5 @@
-export_path = "/home/lapishla/Desktop/Prat_session_export/";
+% Navigate to export directory before running script
+export_path = pwd();
 
 export_csv = fullfile(export_path, "Export.csv");
 
