@@ -11,7 +11,12 @@ t = readtable(export_csv, opts);
 t = t(~cellfun(@isempty, t.export_path), :);
 
 %% load all call tables into this session table
-t.calls = cellfun(@(x) load(x).calls, t.export_path, UniformOutput=false);
+% For portability get the path relative to the
+% export director, instead of using the raw original export path.
+[~, mat_names, ext] = fileparts(t.export_path);
+% Load just the calls. Currently, I have no need for audio_file_info
+load_fun = @(x) load(x).calls;
+t.calls = cellfun(load_fun, local_mat_paths, UniformOutput=false);
 
 %% Synchronize time
 % audio time
