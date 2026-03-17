@@ -134,17 +134,6 @@ xlabel("Time (minutes)")
 ylabel("USV Rate (Hz)")
 legend()
 
-%% 1 vs 2 rats USVs
-two_rats = contains(t.treatment, '_');
-
-figure(2); clf; hold on;
-x = (edges(1:end-1)+diff(edges)/2) / 60;
-shadedErrorBar(x, usv_rate(two_rats,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'blue', 'DisplayName', '2 rats'})
-shadedErrorBar(x, usv_rate(~two_rats,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'green', 'DisplayName', '1 rat'})
-
-xlabel("Time (minutes)")
-ylabel("USV Rate (Hz)")
-legend()
 
 %% treatment groups (only 2 rats)
 water = contains(t.treatment, 'Control_Control');
