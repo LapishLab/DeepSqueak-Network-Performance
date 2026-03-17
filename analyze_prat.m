@@ -1,5 +1,6 @@
-export_path = "/home/lapishla/Desktop/Prat_session_export/";
-
+% This script requires https://github.com/raacampbell/shadedErrorBar
+% Navigate to export directory before running script
+export_path = pwd();
 export_csv = fullfile(export_path, "Export.csv");
 
 %% load table, force all variables as string to prevent issueTimes from getting formatted weird
@@ -11,14 +12,21 @@ t = readtable(export_csv, opts);
 t = t(~cellfun(@isempty, t.export_path), :);
 
 %% load all call tables into this session table
-t.calls = cellfun(@(x) load(x).calls, t.export_path, UniformOutput=false);
+% For portability get the path relative to the
+% export director, instead of using the raw original export path.
+[~, mat_names, ext] = fileparts(t.export_path);
+local_mat_paths = fullfile(export_path, mat_names+ext);
+% Load just the calls. Currently, I have no need for audio_file_info
+load_fun = @(x) load(x).calls;
+t.calls = cellfun(load_fun, local_mat_paths, UniformOutput=false);
 
 %% Synchronize time
 % audio time
 % time 0 is start of the file when started on the Pis 
 [~,id,~] = fileparts(t.export_path);
 time_string = extractBefore(id, 16);
-audio_time = timeofday(datetime(time_string, InputFormat="uuuuMMdd_HHmmss"));
+audio_datetime = datetime(time_string, InputFormat="uuuuMMdd_HHmmss");
+audio_time = timeofday(audio_datetime);
 
 % issue time
 % when MedPC boxes were issued 
@@ -38,23 +46,11 @@ for i=1:height(audio_offset)
     t.calls{i} = calls;
 end
 
-%% Load the med structs into the table
-% go back up to find med-pc folder in datastar and then parses them out 
-for i=1:height(t)
-    t.med_struct{i} = getMedFile(t.session_path{i}, t.subject{i});
-end
-
-% For now just drop any rows that couldn't load the med data
-t = t(~cellfun(@isempty, t.med_struct), :);
-
-
-%% Plot USVs and Licks
-edges = -10*60 : 10 : 70*60;
+%% Bin average USV rate and frequency
+edges = -10*60 : 10 : 70*60; 
 tdif = diff(edges(1:2));
 
 usv_rate = nan(height(t), length(edges)-1);
-lick_rate_l = usv_rate;
-lick_rate_r = usv_rate;
 usv_freq = usv_rate;
 for i=1:height(t)
     % get usv rate
@@ -72,8 +68,64 @@ for i=1:height(t)
     sz = [length(edges)-1, 1];
     avg =  @(x) mean(x, 'omitnan');
     usv_freq(i,:) = accumarray(binIndices, call_freq, sz, avg, NaN);
+end
+sem = @(x) std(x, 'omitnan')/sqrt(sum(~isnan(x(:,1))));
+avg_nan = @(x) mean(x, 'omitnan');
 
-    % get lick rate
+%% 1 vs 2 rats USVs
+two_rats = contains(t.treatment, '_');
+
+figure(2); clf; hold on;
+x = (edges(1:end-1)+diff(edges)/2) / 60;
+shadedErrorBar(x, usv_rate(two_rats,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'blue', 'DisplayName', '2 rats'})
+shadedErrorBar(x, usv_rate(~two_rats,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'green', 'DisplayName', '1 rat'})
+
+xlabel("Time (minutes)")
+ylabel("USV Rate (Hz)")
+legend()
+
+
+%% treatment groups (only 2 rats)
+water = contains(t.treatment, 'Control_Control');
+ethanol = contains(t.treatment, 'EtOH_EtOH');
+mixed = contains(t.treatment, 'EtOH_Control') | contains(t.treatment, 'Control_EtOH');
+
+
+figure(3); clf; hold on;
+x = (edges(1:end-1)+diff(edges)/2) / 60;
+shadedErrorBar(x, usv_rate(water,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'blue', 'DisplayName', 'Water-Water'})
+shadedErrorBar(x, usv_rate(ethanol,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'green', 'DisplayName', 'EtOH-EtOH'})
+shadedErrorBar(x, usv_rate(mixed,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'red', 'DisplayName', 'Water-EtOH'})
+xlabel("Time (minutes)")
+ylabel("USV Rate (Hz)")
+legend()
+
+%% Male vs Female
+M = contains(t.sex, 'M');
+
+figure(4); clf; hold on;
+x = (edges(1:end-1)+diff(edges)/2) / 60;
+shadedErrorBar(x, usv_rate(M,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'blue', 'DisplayName', 'Male'})
+shadedErrorBar(x, usv_rate(~M,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'green', 'DisplayName', 'Female'})
+xlabel("Time (minutes)")
+ylabel("USV Rate (Hz)")
+legend()
+
+%%%%%%%%%%%%%%% LICK STUFF NEEDS ACCESS TO MED FILES %%%%%%%%%%%%%%%%%%%%%
+%% Load the med structs into the table
+% go back up to find med-pc folder in datastar and then parses them out 
+for i=1:height(t)
+    t.med_struct{i} = getMedFile(t.session_path{i}, t.subject{i});
+end
+
+% For now just drop any rows that couldn't load the med data
+t = t(~cellfun(@isempty, t.med_struct), :);
+
+%% Bin Licks
+% Defaults to same bin edges as used for USVs
+lick_rate_l = nan(height(t), length(edges)-1);
+lick_rate_r = nan(height(t), length(edges)-1);
+for i=1:height(t)
     med = t.med_struct{i};
     if ~isempty(med.E)
         lick_rate_l(i,:) = histcounts(med.E, edges) / tdif;
@@ -81,14 +133,8 @@ for i=1:height(t)
     if ~isempty(med.F)
         lick_rate_r(i,:) = histcounts(med.F, edges) / tdif;
     end
-
-
-
 end
 all_licks = cat(1, lick_rate_l, lick_rate_r);
-
-sem = @(x) std(x, 'omitnan')/sqrt(sum(~isnan(x(:,1))));
-avg_nan = @(x) mean(x, 'omitnan');
 %% usv rate vs licks
 % find functions that use the ridges for time and frequency of squeaks
 figure(1); clf; hold on;
@@ -116,55 +162,7 @@ xlabel("Time (minutes)")
 
 legend()
 
-%% 1 vs 2 rats USVs
-two_rats = contains(t.treatment, '_');
 
-figure(2); clf; hold on;
-x = (edges(1:end-1)+diff(edges)/2) / 60;
-shadedErrorBar(x, usv_rate(two_rats,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'blue', 'DisplayName', '2 rats'})
-shadedErrorBar(x, usv_rate(~two_rats,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'green', 'DisplayName', '1 rat'})
-
-xlabel("Time (minutes)")
-ylabel("USV Rate (Hz)")
-legend()
-
-%% 1 vs 2 rats USVs
-two_rats = contains(t.treatment, '_');
-
-figure(2); clf; hold on;
-x = (edges(1:end-1)+diff(edges)/2) / 60;
-shadedErrorBar(x, usv_rate(two_rats,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'blue', 'DisplayName', '2 rats'})
-shadedErrorBar(x, usv_rate(~two_rats,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'green', 'DisplayName', '1 rat'})
-
-xlabel("Time (minutes)")
-ylabel("USV Rate (Hz)")
-legend()
-
-%% treatment groups (only 2 rats)
-water = contains(t.treatment, 'Control_Control');
-ethanol = contains(t.treatment, 'EtOH_EtOH');
-mixed = contains(t.treatment, 'EtOH_Control') | contains(t.treatment, 'Control_EtOH');
-
-
-figure(3); clf; hold on;
-x = (edges(1:end-1)+diff(edges)/2) / 60;
-shadedErrorBar(x, usv_rate(water,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'blue', 'DisplayName', 'Water-Water'})
-shadedErrorBar(x, usv_rate(ethanol,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'green', 'DisplayName', 'EtOH-EtOH'})
-shadedErrorBar(x, usv_rate(mixed,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'red', 'DisplayName', 'Water-EtOH'})
-xlabel("Time (minutes)")
-ylabel("USV Rate (Hz)")
-legend()
-
-%% Male vs Female
-M = contains(t.sex, 'M');
-
-figure(4); clf; hold on;
-x = (edges(1:end-1)+diff(edges)/2) / 60;
-shadedErrorBar(x, usv_rate(M,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'blue', 'DisplayName', 'Male'})
-shadedErrorBar(x, usv_rate(~M,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'green', 'DisplayName', 'Female'})
-xlabel("Time (minutes)")
-ylabel("USV Rate (Hz)")
-legend()
 %%
 function med_struct = getMedFile(session_path,subject_str)
     medDir = getMedDir(session_path);
