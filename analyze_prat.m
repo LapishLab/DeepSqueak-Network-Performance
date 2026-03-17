@@ -45,23 +45,11 @@ for i=1:height(audio_offset)
     t.calls{i} = calls;
 end
 
-%% Load the med structs into the table
-% go back up to find med-pc folder in datastar and then parses them out 
-for i=1:height(t)
-    t.med_struct{i} = getMedFile(t.session_path{i}, t.subject{i});
-end
-
-% For now just drop any rows that couldn't load the med data
-t = t(~cellfun(@isempty, t.med_struct), :);
-
-
-%% Plot USVs and Licks
-edges = -10*60 : 10 : 70*60;
+%% Bin average USV rate and frequency
+edges = -10*60 : 10 : 70*60; 
 tdif = diff(edges(1:2));
 
 usv_rate = nan(height(t), length(edges)-1);
-lick_rate_l = usv_rate;
-lick_rate_r = usv_rate;
 usv_freq = usv_rate;
 for i=1:height(t)
     % get usv rate
@@ -79,49 +67,9 @@ for i=1:height(t)
     sz = [length(edges)-1, 1];
     avg =  @(x) mean(x, 'omitnan');
     usv_freq(i,:) = accumarray(binIndices, call_freq, sz, avg, NaN);
-
-    % get lick rate
-    med = t.med_struct{i};
-    if ~isempty(med.E)
-        lick_rate_l(i,:) = histcounts(med.E, edges) / tdif;
-    end
-    if ~isempty(med.F)
-        lick_rate_r(i,:) = histcounts(med.F, edges) / tdif;
-    end
-
-
-
 end
-all_licks = cat(1, lick_rate_l, lick_rate_r);
-
 sem = @(x) std(x, 'omitnan')/sqrt(sum(~isnan(x(:,1))));
 avg_nan = @(x) mean(x, 'omitnan');
-%% usv rate vs licks
-% find functions that use the ridges for time and frequency of squeaks
-figure(1); clf; hold on;
-x = (edges(1:end-1)+diff(edges)/2) / 60;
-shadedErrorBar(x, usv_rate, {avg_nan, sem}, 'lineProps',{ 'Color', 'green', 'DisplayName', 'USVs'})
-shadedErrorBar(x, all_licks, {avg_nan, sem}, 'lineProps',{ 'Color', 'blue','DisplayName', 'Licks'})
-xlabel("Time (minutes)")
-ylabel("Rate (Hz)")
-legend()
-
-%% usv frequency vs licks
-figure(11); clf; hold on;
-x = (edges(1:end-1)+diff(edges)/2) / 60;
-yyaxis left
-shadedErrorBar(x, usv_freq/1000, {avg_nan, sem}, 'lineProps',{ 'Color', 'green', 'DisplayName', 'USVs'})
-ax = gca;
-ax.YColor = 'green';
-ylabel("USV frequency (kHz)")
-yyaxis right
-shadedErrorBar(x, all_licks, {avg_nan, sem}, 'lineProps',{ 'Color', 'blue','DisplayName', 'Licks'})
-ax = gca;
-ax.YColor = 'blue';
-ylabel("Lick rate (Hz)")
-xlabel("Time (minutes)")
-
-legend()
 
 %% 1 vs 2 rats USVs
 two_rats = contains(t.treatment, '_');
@@ -161,6 +109,59 @@ shadedErrorBar(x, usv_rate(~M,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'green'
 xlabel("Time (minutes)")
 ylabel("USV Rate (Hz)")
 legend()
+
+%%%%%%%%%%%%%%% LICK STUFF NEEDS ACCESS TO MED FILES %%%%%%%%%%%%%%%%%%%%%
+%% Load the med structs into the table
+% go back up to find med-pc folder in datastar and then parses them out 
+for i=1:height(t)
+    t.med_struct{i} = getMedFile(t.session_path{i}, t.subject{i});
+end
+
+% For now just drop any rows that couldn't load the med data
+t = t(~cellfun(@isempty, t.med_struct), :);
+
+%% Bin Licks
+% Defaults to same bin edges as used for USVs
+lick_rate_l = nan(height(t), length(edges)-1);
+lick_rate_r = nan(height(t), length(edges)-1);
+for i=1:height(t)
+    med = t.med_struct{i};
+    if ~isempty(med.E)
+        lick_rate_l(i,:) = histcounts(med.E, edges) / tdif;
+    end
+    if ~isempty(med.F)
+        lick_rate_r(i,:) = histcounts(med.F, edges) / tdif;
+    end
+end
+all_licks = cat(1, lick_rate_l, lick_rate_r);
+%% usv rate vs licks
+% find functions that use the ridges for time and frequency of squeaks
+figure(1); clf; hold on;
+x = (edges(1:end-1)+diff(edges)/2) / 60;
+shadedErrorBar(x, usv_rate, {avg_nan, sem}, 'lineProps',{ 'Color', 'green', 'DisplayName', 'USVs'})
+shadedErrorBar(x, all_licks, {avg_nan, sem}, 'lineProps',{ 'Color', 'blue','DisplayName', 'Licks'})
+xlabel("Time (minutes)")
+ylabel("Rate (Hz)")
+legend()
+
+%% usv frequency vs licks
+figure(11); clf; hold on;
+x = (edges(1:end-1)+diff(edges)/2) / 60;
+yyaxis left
+shadedErrorBar(x, usv_freq/1000, {avg_nan, sem}, 'lineProps',{ 'Color', 'green', 'DisplayName', 'USVs'})
+ax = gca;
+ax.YColor = 'green';
+ylabel("USV frequency (kHz)")
+yyaxis right
+shadedErrorBar(x, all_licks, {avg_nan, sem}, 'lineProps',{ 'Color', 'blue','DisplayName', 'Licks'})
+ax = gca;
+ax.YColor = 'blue';
+ylabel("Lick rate (Hz)")
+xlabel("Time (minutes)")
+
+legend()
+
+
 %%
 function med_struct = getMedFile(session_path,subject_str)
     medDir = getMedDir(session_path);
