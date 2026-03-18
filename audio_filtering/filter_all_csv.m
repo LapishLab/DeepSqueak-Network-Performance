@@ -6,8 +6,10 @@ function filter_all_csv(csvPath)
 
     % Read CSV into a table
     T = readtable(csvPath, Delimiter=",");
-
-    [folder,name,~]=fileparts(T.audio_file_path);
+    
+    % save location for whitened audio data. Saved in folder on computer
+    % that also has the links to the audio
+    [folder,name,~]=fileparts(T.link_name);
     new_names = fullfile(folder,name+"_whitened.flac");
 
     for i = 1:height(T)
