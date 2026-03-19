@@ -3,3 +3,4 @@
 /detection/human_curated/Prat_Urgency/audio
 *.csv#
 *.DS_Store
+/detection/human_curated/scentEtOH_urgencyDD/audio
