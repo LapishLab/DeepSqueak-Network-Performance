@@ -15,7 +15,7 @@ for i=1:num_images
     im = imread(t.imageFilename(i));
 
     prediction = predict_boxes(im, detector);
-    img_peformance{i} = get_confusion_from_overlap(t.Boxes{i}, prediction.Boxes);
+    img_peformance{i} = get_confusion_from_overlap(t.Boxes{i}, prediction.Box);
     
     if opts.plot
         figure(1); clf;
