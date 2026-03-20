@@ -4,8 +4,13 @@ arguments
     validation_folder string
     net_path string
 end
-train = load_datastore(train_folder);
-val = load_datastore(validation_folder);
+
+% Load existing network
+network = load(net_path);
+
+% Load data
+train = load_datastore(train_folder,  network.detector.ClassNames);
+val = load_datastore(validation_folder,  network.detector.ClassNames);
 
 op = trainingOptions('sgdm');
 op.InitialLearnRate=0.001;
@@ -22,10 +27,6 @@ op.CheckpointPath = fullfile(folder, file+"_checkpoint");
 [~] = mkdir(op.CheckpointPath);
 op.OutputNetwork='best-validation';
 
-
-% Load existing network
-network = load(net_path);
-
 % Train the YOLO v2 network.
 [detector,info] = trainYOLOXObjectDetector(train,network.detector,op);
 
@@ -38,7 +39,7 @@ file_path = fullfile(fileparts(net_path), "lapish_"+timestamp+".mat");
 save(file_path, '-struct', "network")
 end
 
-function data = load_datastore(folder)
+function data = load_datastore(folder, class_names)
     % load and concatonate TTables
     fnames = {dir(fullfile(folder,"*.mat")).name};
     ttables = table();
@@ -47,6 +48,12 @@ function data = load_datastore(folder)
         ttables = cat(1, ttables, d.TTable);
     end
     ttables = ttables(~cellfun(@isempty, ttables.Labels), :);
+
+    % Make sure all categorical variables have the required classnames in
+    % their metadata, otherwise Matlab might throw a completely pointless
+    % error that is incredibly hard to debug and ruins your evening
+    add_classnames = @(x) addcats(x, class_names);
+    ttables.Labels = cellfun(add_classnames, ttables.Labels, 'UniformOutput', false);
 
     % Convert to datastore
     blds = boxLabelDatastore( ttables(:,{'Boxes','Labels'}));

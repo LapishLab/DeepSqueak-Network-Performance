@@ -1,21 +1,22 @@
-function output = create_training_images(input_dir, output_dir, settings, opts)
+function output = create_training_images(detections, output_dir, settings, opts)
 arguments
-    input_dir string % Path to folder of detection mat files
+    detections table % Table of loaded detection files {file_names, audiodata, Calls}
     output_dir string % Where to save images and label table 
     settings struct = spectrogram_settings() % Settings for spectrogram
     opts.plot logical = false
     opts.saveAnnotated logical = false;
 end
-mat_files = fullfile(input_dir,{dir(fullfile(input_dir,"*.mat")).name}');
+% mat_files = fullfile(detections,{dir(fullfile(detections,"*.mat")).name}');
 mkdir(fullfile(output_dir,"images"));     
 
 TTable = table();
-for k = 1:length(mat_files)
-    d = load(mat_files(k));
-    d = filter_calls(d); %TODO: consider input as calls instead of
+for k = 1:height(detections)
+    % d = load(mat_files(k));
+    % d = filter_calls(d, include_non_usv=true); %TODO: consider input as calls instead of
     % directory so that we can filter outside of this function.
+    d = table2struct(detections(k,:));
     fprintf("Starting file %i/%i: %i calls \n", ...
-        k, length(mat_files), height(d.Calls) )
+        k, height(detections), height(d.Calls) )
     
     if height(d.Calls)==0
         continue
