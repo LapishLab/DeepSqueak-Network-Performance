@@ -1,6 +1,8 @@
 clear
-truth_dir = "/home/lapishla/Documents/GitHub/DeepSqueak-Network-Performance/" + ...
-    "detection/human_curated/Prat_Urgency/detection_files/validation/";
+% truth_dir = "/home/lapishla/Documents/GitHub/DeepSqueak-Network-Performance/" + ...
+%     "detection/human_curated/Prat_Urgency/detection_files/validation/";
+
+truth_dir = "/home/lapishla/Desktop/network_validation/majority/";
 
 test_parent = "/home/lapishla/Desktop/network_validation/";
 test_names = {dir(test_parent).name};
