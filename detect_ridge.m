@@ -1,4 +1,4 @@
-function [times, frequencies, amplitudes] = detect_ridge(calls, filename, opt)
+function calls = detect_ridge(calls, filename, opt)
 arguments
     calls table
     filename string
@@ -17,9 +17,6 @@ arguments
     opt.noverlap = 3e-3
 end
 
-times  = cell(height(calls), 1);
-frequencies = cell(height(calls), 1);
-amplitudes = cell(height(calls), 1);
 
 for i=1:height(calls)
     %% Get audio segment
@@ -53,9 +50,10 @@ for i=1:height(calls)
     greaterthannoise = amp > thres;
 
     %% Restrict to pixels greater than noise and save
-    amplitudes{i} = amp(greaterthannoise)';
-    frequencies{i} = freq(greaterthannoise)';
-    times{i} = double(T(greaterthannoise)'); % Also force T to be double precision (sometimes is single)
+    calls.ridge_time{i} = double(T(greaterthannoise)');
+    calls.ridge_frequency{i} = freq(greaterthannoise)';
+    calls.ridge_amp{i} = amp(greaterthannoise)';
+    calls.ridge_snr{i} = calls.ridge_amp{i}.^2 ./ mean(A(:,greaterthannoise).^2)';
 
     if opt.plot
         %% Plot spectrogram
@@ -70,7 +68,7 @@ for i=1:height(calls)
         clim([0 prctile(A(:),99.9)])
         
         hold on 
-        scatter(times{i},  frequencies{i}, 'filled', 'red',  MarkerFaceAlpha=0.5)
+        scatter(calls.ridge_time{i}, calls.ridge_frequency{i}, 'filled', 'red',  MarkerFaceAlpha=0.5)
         
         box = calls.Box(i,:);
         box([2,4]) = box([2,4]) * 1000;
