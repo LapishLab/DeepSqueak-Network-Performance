@@ -11,6 +11,8 @@ times  = cell(height(calls), 1);
 frequencies = cell(height(calls), 1);
 amplitudes = cell(height(calls), 1);
 
+settings = spectrogram_settings();
+
 for i=1:height(calls)
     %% Get audio segment
     start_time = calls.Box(i,1);
@@ -18,9 +20,12 @@ for i=1:height(calls)
     [y, Fs] = load_audio_segment(filename, start_time, stop_time);
 
     %% Get spectrogram
-    window = round(Fs * 0.0032);% Deepsqueak default = .0032 s
-    nfft = round(Fs * 0.0032);% Deepsqueak default = .0032 s
-    [~,F,T,P] = spectrogram(y,window,[],nfft, Fs); % defaults to 50% overlap with []
+
+    % Make the spectrogram
+    F = settings.min_frequency : settings.step_frequency : settings.max_frequency;
+    noverlap = round(settings.noverlap * Fs);
+    wind = round(settings.wind * Fs);
+    [~,~,T,P] = spectrogram(y,wind,noverlap,F,Fs,'psd');
     T = T+start_time;
     P = sqrt(P); % Convert power to amplitude
     P = imgaussfilt(P, opt.smoothing); % smooth power
