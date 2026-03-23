@@ -13,12 +13,16 @@ function batch_detect_calls(audio_folder, output_folder, network)
     t = t(need_export,:);
     
     %% Run detection on each file and save results in mat
-    for i = 1:height(t)
+    audio_paths = t.audio_paths;
+    mat_paths = t.mat_paths;
+    n=height(t);
+    % for i=1:n
+    parfor (i = 1:n, 6) % Run in parallel with 6 workers
         % Run detection
-        detection = detect_calls(t.audio_paths(i), network);
+        detection = detect_calls(audio_paths(i), network);
     
         % Save detection to mat file
-        save(t.mat_paths(i), '-struct', "detection")
-        fprintf("Completed file %i/%i \n", i,height(t))
+        save(mat_paths(i), '-fromstruct', detection)
+        fprintf("Completed file %i/%i \n", i,n)
     end
 end
