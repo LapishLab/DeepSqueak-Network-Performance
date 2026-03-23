@@ -2,16 +2,24 @@ function [times, frequencies, amplitudes] = detect_ridge(calls, filename, opt)
 arguments
     calls table
     filename string
-    opt.ampThresh double = 2; % standard deviations above median
-    opt.smoothing double = [2,1]; % smoothing sigma for frequency and time
+    opt.ampThresh double = 5; % standard deviations above median
+
+    opt.smth_time = 1e-3; % gaussian smoothing across time (s)
+    opt.smth_freq = 500; % gaussian smoothing across freq (Hz)
+
     opt.plot logical = false % Should a plot be created
+
+    opt.min_frequency = 1000
+    opt.step_frequency = 500;
+    opt.max_frequency = 90e3
+
+    opt.wind = 4e-3
+    opt.noverlap = 3e-3
 end
 
 times  = cell(height(calls), 1);
 frequencies = cell(height(calls), 1);
 amplitudes = cell(height(calls), 1);
-
-settings = spectrogram_settings();
 
 for i=1:height(calls)
     %% Get audio segment
@@ -20,15 +28,17 @@ for i=1:height(calls)
     [y, Fs] = load_audio_segment(filename, start_time, stop_time);
 
     %% Get spectrogram
-
-    % Make the spectrogram
-    F = settings.min_frequency : settings.step_frequency : settings.max_frequency;
-    noverlap = round(settings.noverlap * Fs);
-    wind = round(settings.wind * Fs);
+    F = opt.min_frequency : opt.step_frequency : opt.max_frequency;
+    noverlap = round(opt.noverlap * Fs);
+    wind = round(opt.wind * Fs);
     [~,~,T,P] = spectrogram(y,wind,noverlap,F,Fs,'psd');
     T = T+start_time;
     P = sqrt(P); % Convert power to amplitude
-    P = imgaussfilt(P, opt.smoothing); % smooth power
+
+    % gaussian smoothing
+    sigma_t = opt.smth_time / diff(T(1:2));
+    sigma_f = opt.smth_freq / diff(F(1:2));
+    P = imgaussfilt(P, [sigma_f, sigma_t]); % smooth power
     
     %% Chose single brightest pixel for each timepoint within the box frequencies
     min_freq = calls.Box(i,2) * 1000;
@@ -38,10 +48,8 @@ for i=1:height(calls)
     box_f = F(in_box);
     freq = box_f(max_inds);
     
-    %% Are values above threshold (40-80 kHz used for baseline)
-    normFreq = F>40e3 & F<80e3;
-    normVals = P(normFreq,:);
-    thres = median(normVals) + std(normVals)*opt.ampThresh;
+    %% Are values above threshold
+    thres = median(P(:)) + mad(P(:),1)*opt.ampThresh;
     greaterthannoise = amp > thres;
 
     %% Restrict to pixels greater than noise and save
@@ -59,7 +67,7 @@ for i=1:height(calls)
         c = colorbar;
         c.Label.String = 'Amplitude';
         
-        clim([0 prctile(P(:),99)])
+        clim([0 prctile(P(:),99.9)])
         
         hold on 
         scatter(times{i},  frequencies{i}, 'filled', 'red',  MarkerFaceAlpha=0.5)
@@ -70,5 +78,7 @@ for i=1:height(calls)
         pause(0.1);
     end
 end
+
+
 
 end
