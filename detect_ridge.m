@@ -53,7 +53,7 @@ for i=1:height(calls)
     calls.ridge_time{i} = double(T(greaterthannoise)');
     calls.ridge_frequency{i} = freq(greaterthannoise)';
     calls.ridge_amp{i} = amp(greaterthannoise)';
-    calls.ridge_snr{i} = calls.ridge_amp{i}.^2 ./ mean(A(:,greaterthannoise).^2)';
+    calls.ridge_snr{i} = calls.ridge_amp{i}.^2 ./ mean(A(~in_box,greaterthannoise).^2)';
 
     if opt.plot
         %% Plot spectrogram
