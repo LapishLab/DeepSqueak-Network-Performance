@@ -31,25 +31,25 @@ for i=1:height(calls)
     F = opt.min_frequency : opt.step_frequency : opt.max_frequency;
     noverlap = round(opt.noverlap * Fs);
     wind = round(opt.wind * Fs);
-    [~,~,T,P] = spectrogram(y,wind,noverlap,F,Fs,'psd');
+    [~,~,T,A] = spectrogram(y,wind,noverlap,F,Fs,'psd');
     T = T+start_time;
-    P = sqrt(P); % Convert power to amplitude
+    A = sqrt(A); % Convert power to amplitude
 
     % gaussian smoothing
     sigma_t = opt.smth_time / diff(T(1:2));
     sigma_f = opt.smth_freq / diff(F(1:2));
-    P = imgaussfilt(P, [sigma_f, sigma_t]); % smooth power
+    A = imgaussfilt(A, [sigma_f, sigma_t]); % smooth power
     
     %% Chose single brightest pixel for each timepoint within the box frequencies
     min_freq = calls.Box(i,2) * 1000;
     max_freq = sum(calls.Box(i,[2,4])) * 1000;
     in_box = F>min_freq & F<max_freq;
-    [amp,max_inds] = max(P(in_box,:), [], 1);
+    [amp,max_inds] = max(A(in_box,:), [], 1);
     box_f = F(in_box);
     freq = box_f(max_inds);
     
     %% Are values above threshold
-    thres = median(P(:)) + mad(P(:),1)*opt.ampThresh;
+    thres = median(A(:)) + mad(A(:),1)*opt.ampThresh;
     greaterthannoise = amp > thres;
 
     %% Restrict to pixels greater than noise and save
@@ -60,14 +60,14 @@ for i=1:height(calls)
     if opt.plot
         %% Plot spectrogram
         clf
-        imagesc(T, F, P); 
+        imagesc(T, F, A); 
         axis xy;
         ylabel('Frequency (kHz)');
         xlabel('Time (s)');
         c = colorbar;
         c.Label.String = 'Amplitude';
         
-        clim([0 prctile(P(:),99.9)])
+        clim([0 prctile(A(:),99.9)])
         
         hold on 
         scatter(times{i},  frequencies{i}, 'filled', 'red',  MarkerFaceAlpha=0.5)
