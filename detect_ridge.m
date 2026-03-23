@@ -39,16 +39,10 @@ for i=1:height(calls)
     thres = median(normVals) + std(normVals)*opt.ampThresh;
     greaterthannoise = amp > thres;
 
-
-    %% Restrict to pixels greater than noise
-    amp = amp(greaterthannoise);
-    freq = freq(greaterthannoise);
-    T = T(greaterthannoise);
-
-    %% Reshape and save
-    amplitudes{i} = amp(:);
-    frequencies{i} = freq(:);
-    times{i} = double(T(:)); % Also force T to be double precision (sometimes is single)
+    %% Restrict to pixels greater than noise and save
+    amplitudes{i} = amp(greaterthannoise)';
+    frequencies{i} = freq(greaterthannoise)';
+    times{i} = double(T(greaterthannoise)'); % Also force T to be double precision (sometimes is single)
 
     if opt.plot
         %% Plot spectrogram
@@ -63,7 +57,7 @@ for i=1:height(calls)
         clim([0 prctile(P(:),99)])
         
         hold on 
-        scatter(times{i},  frequencies{i}, 'filled', 'red')
+        scatter(times{i},  frequencies{i}, 'filled', 'red',  MarkerFaceAlpha=0.5)
         
         box = calls.Box(i,:);
         box([2,4]) = box([2,4]) * 1000;
