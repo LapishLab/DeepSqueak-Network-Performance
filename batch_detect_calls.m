@@ -17,7 +17,7 @@ function batch_detect_calls(audio_folder, output_folder, network)
     mat_paths = t.mat_paths;
     n=height(t);
     % for i=1:n
-    parfor (i = 1:n, 6) % Run in parallel with 6 workers
+    parfor (i = 1:n, 8) % Run in parallel with 8 workers
         % Run detection
         detection = detect_calls(audio_paths(i), network);
     
