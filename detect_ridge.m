@@ -28,6 +28,9 @@ for i=1:height(calls)
     F = opt.min_frequency : opt.step_frequency : opt.max_frequency;
     noverlap = round(opt.noverlap * Fs);
     wind = round(opt.wind * Fs);
+    if wind>length(y)
+        continue %Skip super short calls
+    end
     [~,~,T,A] = spectrogram(y,wind,noverlap,F,Fs,'psd');
     T = T+start_time;
     A = sqrt(A); % Convert power to amplitude
