@@ -10,15 +10,15 @@ function s = calc_file_performance(truth_file, test_file, opts)
     end
 
     %% load calls
-    truth = load(truth_file);
-    test = load(test_file);
+    truth = load(truth_file).Calls;
+    test = load(test_file).Calls;
 
     %% filter calls
     truth = filter_calls(truth, min_duration=opts.min_duration, min_score=opts.min_score, include_rejected=opts.include_rejected);
     test = filter_calls(test, min_duration=opts.min_duration, min_score=opts.min_score, include_rejected=opts.include_rejected);
 
-    truth_box = truth.Calls.Box;
-    test_box = test.Calls.Box;
+    truth_box = truth.Box;
+    test_box = test.Box;
     %% calculator confusion matrix statistics 
     s = get_confusion_from_overlap(truth_box, test_box, min_overlap=opts.min_overlap);
 end

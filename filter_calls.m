@@ -1,6 +1,6 @@
-function detection = filter_calls(detection, opts)
+function calls = filter_calls(calls, opts)
     arguments
-        detection struct %
+        calls table %
         opts.min_duration double = .005 % minimum duration of a USV to be included in the analysis
         opts.min_score double = 0.5 % Score (confidence) of a USV to be included in the analysis
         opts.include_rejected logical = false; % Should USVs marked as "rejected" be included in the analysis
@@ -9,7 +9,6 @@ function detection = filter_calls(detection, opts)
         opts.include_non_usv logical = false; % Should calls with labels other than USV be included?
     end
 
-    calls = detection.Calls;
     % perform various checks
     calls = calls(calls.Box(:,3) > opts.min_duration, :);
     calls = calls(calls.Score > opts.min_score, :);
@@ -24,6 +23,4 @@ function detection = filter_calls(detection, opts)
     if ~opts.include_non_usv
         calls = calls(startsWith(string(calls.Type), "USV"), :);
     end
-
-    detection.Calls = calls;
 end
