@@ -4,3 +4,4 @@
 *.csv#
 *.DS_Store
 /detection/human_curated/scentEtOH_urgencyDD/audio
+/detection/human_curated/scentEtOH_urgencyRAP/Wistar_Urgency/audio
