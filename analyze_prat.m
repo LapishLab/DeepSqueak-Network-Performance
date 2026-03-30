@@ -33,6 +33,10 @@ audio_time = timeofday(audio_datetime);
 t.issueTime = pad(t.issueTime, 6, 'left','0');
 issue_time = timeofday(datetime(t.issueTime, InputFormat="HHmmss"));
 
+%add dates to of files to tables
+audio_datetime.Format = 'yyyyMMdd';
+t.date = audio_datetime;
+
 %% find audio offset time and shift (ONLY RUN ONCE)
 % time distance between pi start and medPC issue 
 % maybe change? 
@@ -46,6 +50,56 @@ for i=1:height(audio_offset)
     t.calls{i} = calls;
 end
 
+%% Calculating mean call frequency %%
+for i = 1:height(t)
+    calls = t.calls{i};
+    call_freq = cellfun(@mean, calls.ridge_frequency);
+end 
+
+
+%% USV Counts Comparison %%
+%groups of interest
+singles = contains(t.sex, '_');
+water = contains(t.treatment, 'Control_Control');
+ethanol = contains(t.treatment, 'EtOH_EtOH');
+mixed = contains(t.treatment, 'EtOH_Control') | contains(t.treatment, 'Control_EtOH');
+
+males = contains(t.sex, "M");
+females = contains(t.sex, "F");
+
+EtOH_dates = datetime(2025, 8, [17 19 21 25 27 29]);
+EtOH_dates.Format = 'yyyyMMdd';
+water_dates = datetime(2025, 8, [18 20 26 28]);
+water_dates.Format = 'yyyyMMdd';
+
+EtOH_days = contains(string(t.date), string(EtOH_dates));
+water_days = contains(string(t.date), string(water_dates));
+
+% find number of calls for group you are interested in 
+callColumn = t.calls(water & males & etoh_days :);
+water_counts = arrayfun(@(x) size(callColumn{x},1), 1:numel(callColumn))';
+
+callColumn = t(ethanol & females & EtOH_days, :);
+ethanol_counts = arrayfun(@(x) size(callColumn{x},1), 1:numel(callColumn))';
+
+callColumn = t.calls(mixed & males & water_days, :);
+mixed_counts = arrayfun(@(x) size(callColumn{x},1), 1:numel(callColumn))';
+
+x = ["water", "mixed", "EtOH"];
+y = {water_counts, mixed_counts, ethanol_counts};
+b = raw_data_error_bar(x,y)
+ylabel("USV Number")
+title("USV counts of Females by pairings on Water Days")
+
+
+
+
+
+
+
+
+
+
 %% Bin average USV rate and frequency
 edges = -10*60 : 10 : 70*60; 
 tdif = diff(edges(1:2));
@@ -53,18 +107,26 @@ tdif = diff(edges(1:2));
 usv_rate = nan(height(t), length(edges)-1);
 usv_freq = usv_rate;
 for i=1:height(t)
-    % get usv rate
+    % --- get usv rate --- %
     calls = t.calls{i};
+    % find mean of all the time points of each pixel in a squeak 
     call_times = cellfun(@mean, calls.ridge_time);
+    % number of USV counts in each time bin / total time = percentage of
+    % total squeaks in the file in each time bin 
     usv_rate(i,:) = histcounts(call_times, edges) / tdif;
 
-    % get usv frequency
+    % --- get usv frequency --- %
+    % find mean frequency of each pixel of a squeak, in Hz not KHz
     call_freq = cellfun(@mean, calls.ridge_frequency);
+    % find which time bins have calls in them. Tin bins without calls
+    % (should be mainly those at the start and end) are labeled as NaNs 
     binIndices = discretize(call_times, edges);
     outside_edges = isnan(binIndices);
+    %keep only the data that is in time bins where calls are present 
     call_freq = call_freq(~outside_edges);
     binIndices=binIndices(~outside_edges);
-
+    
+    %find average squeak frequency in each time bin 
     sz = [length(edges)-1, 1];
     avg =  @(x) mean(x, 'omitnan');
     usv_freq(i,:) = accumarray(binIndices, call_freq, sz, avg, NaN);
@@ -164,6 +226,13 @@ legend()
 
 
 %%
+function counts = callNumber(callColumn)
+    counts = [];
+    for i = 1:size(callColumn)
+        counts = [counts; size(callColumn{i},1)];
+    end 
+end 
+
 function med_struct = getMedFile(session_path,subject_str)
     medDir = getMedDir(session_path);
     file_names = string({dir(medDir).name})';
