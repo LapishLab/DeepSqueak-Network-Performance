@@ -1,11 +1,24 @@
-%% load csv 
+%% Split files into validation, test, and training %%
+%information to change for each file
+% load csv 
 clear
-t = readtable("audioFiles_subjectInfo.csv", Delimiter=',');
+csv_path = "/media/lapishla/usv/DeepSqueak-Network-Performance/detection/human_curated/scentEtOH_urgencyRAP/Prat_Urgency/audioFiles_subjectInfo3.csv";
+t = readtable(csv_path, Delimiter=',');
 original = t; % save an unedited copy of the table
 t = convertvars(t, @(x) true, "string"); % convert everything to strings because David likes them more than cell arrays of characters
 
+%Set minute time limits for the file. Minimum time should be negative if
+%you want to include any time before the behavior started. 
+minute_min = -5;
+minute_max = 60;
+
+%what to consider when grouping the files
+%time_group is calculated below
+split_groups = {'sex','treatment','time_group'};
+
+
 %% calculate file time into the recording
-[~,f_names,~] = fileparts(t.audio_file_path);
+f_names = extractBefore(t.file_ID, "_subject");
 file_times = datetime(f_names, 'InputFormat', 'yyyyMMdd_HHmmss');
 t.issueTime = pad(t.issueTime, 6, 'left', '0');
 issue_times = datetime(t.issueTime, 'InputFormat', 'HHmmss');  % Some missing, marked as NaN
@@ -19,13 +32,16 @@ t.post_issue = post_issue;
 
 
 %% Divide session time into thirds (find divide times)
- min_time = -5 * 60; % allow down to -5 minutes as this is the max file length.
- max_time = 60 * 60; % Session should be max 60 minutes
+ min_time = minute_min * 60; % calculate minimum time of behavior in seconds 
+ max_time = minute_max * 60; % calculate max time of behavior in seconds
  ecdf(post_issue(post_issue>min_time & post_issue<max_time))
  yline(0.333, '--')
  yline(0.666, '--')
 
-tdiv = [min_time 900 2250  max_time];
+ total_time = abs(min_time) + abs(max_time);
+ time_in_thirds = total_time/3;
+
+tdiv = [min_time min_time+time_in_thirds min_time+(time_in_thirds*2) max_time];
 
 %% Divide session time into thirds (Assign time labels)
 t.time_group = strings(height(t),1);
@@ -44,7 +60,7 @@ t{contains(t.treatment, "EtOH"), "treatment"} = "EtOH_EtOH"; % Treat single rat 
 include_row = t.time_group ~= ""; % don't include rows that were not assigned a time label
 
 %% Calculate balanced split for given rows and columns
-[split, group_id] = balanced_split(t(include_row, {'sex','treatment','time_group'}));
+[split, group_id] = balanced_split(t(include_row, split_groups));
 
 %% Add time group, split, and unique group ID to the original table
 original.time_group = t.time_group;
